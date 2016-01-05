@@ -17,3 +17,15 @@
         zip/down
         (zip/insert-left item)
         zip/up)))
+
+
+(defn count-points
+  "returns the number of program points in a zipper"
+  [z]
+  (loop [loc (zip/next z)
+         c 1]
+    (if (zip/end? loc)
+      c
+      (recur
+        (zip/next loc)
+        (if (nil? (zip/node loc)) c (inc c))))))

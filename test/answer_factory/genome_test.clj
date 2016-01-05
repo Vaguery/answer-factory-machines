@@ -15,7 +15,6 @@
 
 
 (fact "insert-at-head adds a new node at the root"
-
   test-zipper => ['(1 2 3 (4 5 (6))) nil]
   empty-zipper => ['() nil]
 
@@ -25,7 +24,6 @@
   (zip/root (insert-at-head (insert-at-head empty-zipper 99) 88)) =>
     '(88 99)
 
-
   (zip/root (insert-at-head
               test-zipper 
               (zip/root (insert-at-head 
@@ -34,6 +32,14 @@
     '(                     ;; test-zipper
       (()                  ;; empty-zipper
         :foo :bar :baz)    ;; silly-zipper
-      1 2 3 (4 5 (6))) 
+      1 2 3 (4 5 (6))))
 
-)
+
+(fact "count-points"
+  (count-points empty-zipper) => 1
+  (count-points test-zipper) => 9
+  (count-points silly-zipper) => 4
+  (count-points (zip/seq-zip '(() () ()))) => 4
+  (count-points (zip/seq-zip '((()) (() ()) (() () ())))) => 10
+  (count-points (zip/seq-zip '(((1 :a)) ((2) :b (3)) ((4) (5) (6))))) => 18
+  (count-points (zip/seq-zip '([1 2 3] 4 (5 6)))) => 6)
