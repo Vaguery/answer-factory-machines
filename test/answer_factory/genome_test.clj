@@ -1,45 +1,81 @@
 (ns answer-factory.genome-test
   (:use midje.sweet)
   (:require [clojure.zip :as zip])
-  (:use [answer-factory.genomes]))
+  (:use [answer-factory.genomes])
+  (:use clojure.pprint))
+
+
+;; fixtures
 
 
 (def test-zipper (zip/seq-zip '(1 2 3 (4 5 (6)))))
 (def empty-zipper (zip/seq-zip '()))
-(def silly-zipper (zip/seq-zip '(:foo :bar :baz)))
+(def simple-zipper (zip/seq-zip '(:foo :bar :baz)))
 
 
-(fact "empty-zipper? returns true if the arg is an empty seq"
-  (empty-zipper? empty-zipper) => true
-  (empty-zipper? test-zipper) => false)
+;; helpers
+
+(fact "empty-zipper? returns true if the zipper argument is an empty seq"
+  (empty-zipper? test-zipper) => false
+  (empty-zipper? empty-zipper) => true)
 
 
-(fact "insert-at-head adds a new node at the root"
-  test-zipper => ['(1 2 3 (4 5 (6))) nil]
-  empty-zipper => ['() nil]
+;; movers
 
-  (zip/root (insert-at-head empty-zipper 99)) => '(99)
-  (zip/root (insert-at-head test-zipper 99)) => '(99 1 2 3 (4 5 (6)))
+(fact "rewind moves the cursor of a zipper to its head (not its root!)"
+  (zip/node (rewind test-zipper)) => 1
 
-  (zip/root (insert-at-head (insert-at-head empty-zipper 99) 88)) =>
-    '(88 99)
+  (zip/node (rewind empty-zipper)) => nil
+  (zip/end? (rewind empty-zipper)) => false
 
-  (zip/root (insert-at-head
-              test-zipper 
-              (zip/root (insert-at-head 
-                silly-zipper
-                (zip/root empty-zipper))))) =>
-    '(                     ;; test-zipper
-      (()                  ;; empty-zipper
-        :foo :bar :baz)    ;; silly-zipper
-      1 2 3 (4 5 (6))))
+  (zip/node (rewind simple-zipper)) => :foo)
 
 
-(fact "count-points"
-  (count-points empty-zipper) => 1
-  (count-points test-zipper) => 9
-  (count-points silly-zipper) => 4
-  (count-points (zip/seq-zip '(() () ()))) => 4
-  (count-points (zip/seq-zip '((()) (() ()) (() () ())))) => 10
-  (count-points (zip/seq-zip '(((1 :a)) ((2) :b (3)) ((4) (5) (6))))) => 18
-  (count-points (zip/seq-zip '([1 2 3] 4 (5 6)))) => 6)
+;; head moves
+
+
+(fact "a tuple with :head as its move leaves the cursor at the head of the scratch zipper"
+  
+  (zip/node (edit-with {:from :head :put :L :item 99} test-zipper)) => 1
+  (zip/node (edit-with {:from :head :put :L :item 99} simple-zipper)) => :foo)
+
+
+(fact ":head tuples"
+  (zip/root (edit-with {:from :head :put :L :item 99} test-zipper)) => 
+    '(99 1 2 3 (4 5 (6)))
+  (zip/root (edit-with {:from :head :put :R :item 99} test-zipper)) => 
+    '(1 99 2 3 (4 5 (6)))
+
+  (zip/root (edit-with {:from :head :put :L :item 99} empty-zipper)) => 
+    '(99)
+  (zip/root (edit-with {:from :head :put :R :item 99} empty-zipper)) => 
+    '(99)
+
+  (zip/root (edit-with {:from :head :put :L :item 99} simple-zipper)) => 
+    '(99 :foo :bar :baz)
+  (zip/root (edit-with {:from :head :put :R :item 99} simple-zipper)) => 
+    '(:foo 99 :bar :baz))
+
+
+(fact ":head nil tuples"
+  (zip/root (edit-with {:from :head :put :L :item nil} test-zipper)) => 
+    '(1 2 3 (4 5 (6)))
+  (zip/root (edit-with {:from :head :put :R} test-zipper)) => 
+    '(1 2 3 (4 5 (6)))
+
+  (zip/root (edit-with {:from :head :put :L :item nil} empty-zipper)) => 
+    '()
+  (zip/root (edit-with {:from :head :put :R} empty-zipper)) => 
+    '()
+
+  (zip/root (edit-with {:from :head :put :L :item nil} simple-zipper)) => 
+    '(:foo :bar :baz)
+  (zip/root (edit-with {:from :head :put :R} simple-zipper)) => 
+    '(:foo :bar :baz))
+
+
+;; translating genomes
+
+(fact "an empty genome produces an empty program"
+  (zip->push [])=> [])
+
