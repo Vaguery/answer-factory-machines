@@ -134,6 +134,61 @@
     :baz  )
 
 
+;; subhead moves
+
+
+(fact "a tuple with :subhead as its move leaves the cursor at the leftmost in its level"
+  (let [in-subtree
+    (-> test-zipper zip/next zip/next zip/next zip/next zip/next zip/next)]
+    (zip/node in-subtree) => 5
+    (zip/node (edit-with {:from :subhead :put :L :item 99} in-subtree)) => 4
+    (zip/node (edit-with {:from :subhead :put :R :item 99} in-subtree)) => 4))
+
+
+(fact ":subtree tuples"
+  (let [in-subtree
+    (-> test-zipper zip/next zip/next zip/next zip/next zip/next zip/next)]
+
+    (zip/root (edit-with {:from :subhead :put :L :item 99} in-subtree)) => 
+      '(1 2 3 (99 4 5 (6)))
+    (zip/root (edit-with {:from :subhead :put :R :item 99} in-subtree)) => 
+      '(1 2 3 (4 99 5 (6)))
+
+    (zip/root (edit-with {:from :subhead :put :L :item 99} empty-zipper)) => 
+      '(99)
+    (zip/root (edit-with {:from :subhead :put :R :item 99} empty-zipper)) => 
+      '(99)
+
+    (zip/root (edit-with {:from :subhead :put :L :item 99} simple-zipper)) => 
+      '(99 :foo :bar :baz)
+    (zip/root (edit-with {:from :subhead :put :R :item 99} simple-zipper)) => 
+      '(:foo 99 :bar :baz)))
+
+
+(fact ":subhead nil tuples"
+  (let [in-subtree
+    (-> test-zipper zip/next zip/next zip/next zip/next zip/next zip/next)]
+
+    (zip/root (edit-with {:from :subhead :put :L :item nil} in-subtree)) => 
+      '(1 2 3 (4 5 (6)))
+    (zip/root (edit-with {:from :subhead :put :R} in-subtree)) => 
+      '(1 2 3 (4 5 (6)))
+    (zip/node (edit-with {:from :subhead :put :R} in-subtree)) => 4
+
+    (zip/root (edit-with {:from :subhead :put :L :item nil} empty-zipper)) => 
+      '()
+    (zip/root (edit-with {:from :subhead :put :R} empty-zipper)) => 
+      '()
+    (zip/node (edit-with {:from :subhead :put :R} empty-zipper)) => '()  
+
+    (zip/root (edit-with {:from :subhead :put :L :item nil} simple-zipper)) => 
+      '(:foo :bar :baz)
+    (zip/root (edit-with {:from :subhead :put :R} simple-zipper)) => 
+      '(:foo :bar :baz)
+    (zip/node (edit-with {:from :subhead :put :R} simple-zipper)) => 
+      :foo  ))
+
+
 ;; translating genomes
 
 

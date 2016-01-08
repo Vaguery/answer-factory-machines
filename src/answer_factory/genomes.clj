@@ -8,6 +8,12 @@
   (empty? (zip/root z)))
 
 
+(defn root?
+  "returns true if the cursor is at the root"
+  [z]
+  (= (zip/root z) (zip/node z)))
+
+
 (defn rewind
   "moves the cursor of a zipper to the global head"
   [z]
@@ -22,6 +28,14 @@
       loc
       (recur (zip/next loc)))))
 
+
+(defn goto-leftmost
+  "moves the cursor to the leftmost item in the sublist, or the head if at root or end"
+  [z]
+  (let [lefty (zip/leftmost z)]
+    (if (root? lefty)
+      (zip/down lefty)
+      lefty)))
 
 
 (defn put-left
@@ -58,6 +72,10 @@
           (-> z fast-forward (put-left item))
         [:tail :R]
           (-> z fast-forward (put-right item))
+        [:subhead :L]
+          (-> z goto-leftmost (put-left item))
+        [:subhead :R]
+          (-> z goto-leftmost (put-right item))
         z))))
 
 
