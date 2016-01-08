@@ -11,6 +11,7 @@
 (def test-zipper (zip/seq-zip '(1 2 3 (4 5 (6)))))
 (def empty-zipper (zip/seq-zip '()))
 (def simple-zipper (zip/seq-zip '(:foo :bar :baz)))
+(def stubby-zipper (zip/seq-zip '(() () (()))))
 
 
 ;; helpers
@@ -37,8 +38,25 @@
   (zip/node (fast-forward empty-zipper)) => nil
   (zip/end? (fast-forward empty-zipper)) => false
 
-  (zip/node (fast-forward simple-zipper)) => :baz
-  )
+  (zip/node (fast-forward simple-zipper)) => :baz)
+
+
+(fact "wrap-left moves the cursor one step left"
+  (zip/node (wrap-left (zip/down test-zipper))) => '(4 5 (6))
+  (zip/node (wrap-left (zip/next (zip/next test-zipper)))) => 1
+  (zip/node (wrap-left test-zipper)) => '(4 5 (6))
+
+  (zip/node (wrap-left empty-zipper)) => nil
+
+  (zip/node (wrap-left (zip/down simple-zipper))) => :baz)
+
+(fact "wrap-left stays inside a sublist"
+  (let [in-subtree
+    (-> test-zipper zip/next zip/next zip/next zip/next zip/next zip/next)]
+    (zip/node in-subtree) => 5
+    (zip/node (wrap-left in-subtree)) => 4
+    (zip/node (wrap-left (wrap-left in-subtree))) => '(6)
+    (zip/node (wrap-left (wrap-left (wrap-left in-subtree)))) => 5))
 
 
 
@@ -187,6 +205,74 @@
       '(:foo :bar :baz)
     (zip/node (edit-with {:from :subhead :put :R} simple-zipper)) => 
       :foo  ))
+
+
+;; left moves
+
+
+(fact "a tuple with :left as its move leaves the cursor in the right place"
+  (let [in-subtree
+    (-> test-zipper zip/next zip/next zip/next zip/next zip/next zip/next)]
+    (zip/node in-subtree) => 5
+    (zip/node (edit-with {:from :left :put :L :item 99} in-subtree)) => 4
+    (zip/node (edit-with {:from :left :put :R :item 99} in-subtree)) => 4))
+
+
+(fact ":left tuples"
+  (let [in-subtree
+    (-> test-zipper zip/next zip/next zip/next zip/next zip/next zip/next)]
+
+    (zip/root (edit-with {:from :left :put :L :item 99} in-subtree)) => 
+      '(1 2 3 (99 4 5 (6)))
+    (zip/root (edit-with {:from :left :put :R :item 99} in-subtree)) => 
+      '(1 2 3 (4 99 5 (6)))
+
+    (zip/root (edit-with {:from :left :put :L :item 99} empty-zipper)) => 
+      '(99)
+    (zip/root (edit-with {:from :left :put :R :item 99} empty-zipper)) => 
+      '(99)
+
+    (zip/root (edit-with {:from :left :put :L :item 99} simple-zipper)) => 
+      '(:foo :bar 99 :baz)
+    (zip/root (edit-with {:from :left :put :R :item 99} simple-zipper)) => 
+      '(:foo :bar :baz 99)
+
+    (zip/root (edit-with {:from :left :put :L :item 99} stubby-zipper)) => 
+      '(() () 99 (()))
+    (zip/root (edit-with {:from :left :put :L :item 99}
+      (zip/next (zip/next stubby-zipper)))) => 
+      '((99) () (()))
+
+
+      ))
+
+
+(fact ":left nil tuples"
+  (let [in-subtree
+    (-> test-zipper zip/next zip/next zip/next zip/next zip/next zip/next)]
+
+    (zip/root (edit-with {:from :left :put :L :item nil} in-subtree)) => 
+      '(1 2 3 (4 5 (6)))
+    (zip/root (edit-with {:from :left :put :R} in-subtree)) => 
+      '(1 2 3 (4 5 (6)))
+    (zip/node (edit-with {:from :left :put :R} in-subtree)) => 4
+
+    (zip/root (edit-with {:from :left :put :L :item nil} empty-zipper)) => 
+      '()
+    (zip/root (edit-with {:from :left :put :R} empty-zipper)) => 
+      '()
+    (zip/node (edit-with {:from :left :put :R} empty-zipper)) => '()  
+
+    (zip/root (edit-with {:from :left :put :L :item nil} simple-zipper)) => 
+      '(:foo :bar :baz)
+    (zip/root (edit-with {:from :left :put :R} simple-zipper)) => 
+      '(:foo :bar :baz)
+    (zip/node (edit-with {:from :left :put :R} simple-zipper)) => 
+      :baz  ))
+
+
+
+
 
 
 ;; translating genomes
