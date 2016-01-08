@@ -31,13 +31,24 @@
   (zip/node (rewind simple-zipper)) => :foo)
 
 
+(fact "fast-forward moves the cursor to the tail (not the end!)"
+  (zip/node (fast-forward test-zipper)) => 6
+
+  (zip/node (fast-forward empty-zipper)) => nil
+  (zip/end? (fast-forward empty-zipper)) => false
+
+  (zip/node (fast-forward simple-zipper)) => :baz
+  )
+
+
+
 ;; head moves
 
 
 (fact "a tuple with :head as its move leaves the cursor at the head of the scratch zipper"
-  
   (zip/node (edit-with {:from :head :put :L :item 99} test-zipper)) => 1
   (zip/node (edit-with {:from :head :put :L :item 99} simple-zipper)) => :foo)
+
 
 
 (fact ":head tuples"
@@ -57,6 +68,7 @@
     '(:foo 99 :bar :baz))
 
 
+
 (fact ":head nil tuples"
   (zip/root (edit-with {:from :head :put :L :item nil} test-zipper)) => 
     '(1 2 3 (4 5 (6)))
@@ -74,7 +86,57 @@
     '(:foo :bar :baz))
 
 
+
+;; tail moves
+
+
+(fact "a tuple with :tail as its move leaves the cursor at the tail of the zipper"
+  (zip/node (edit-with {:from :tail :put :L :item 99} test-zipper)) => 6
+  (zip/node (edit-with {:from :tail :put :L :item 99} simple-zipper)) => :baz)
+
+
+
+(fact ":tail tuples"
+  (zip/root (edit-with {:from :tail :put :L :item 99} test-zipper)) => 
+    '(1 2 3 (4 5 (99 6)))
+  (zip/root (edit-with {:from :tail :put :R :item 99} test-zipper)) => 
+    '(1 2 3 (4 5 (6 99)))
+
+  (zip/root (edit-with {:from :tail :put :L :item 99} empty-zipper)) => 
+    '(99)
+  (zip/root (edit-with {:from :tail :put :R :item 99} empty-zipper)) => 
+    '(99)
+
+  (zip/root (edit-with {:from :tail :put :L :item 99} simple-zipper)) => 
+    '(:foo :bar 99 :baz)
+  (zip/root (edit-with {:from :tail :put :R :item 99} simple-zipper)) => 
+    '(:foo :bar :baz 99))
+
+
+(fact ":tail nil tuples"
+  (zip/root (edit-with {:from :tail :put :L :item nil} test-zipper)) => 
+    '(1 2 3 (4 5 (6)))
+  (zip/root (edit-with {:from :tail :put :R} test-zipper)) => 
+    '(1 2 3 (4 5 (6)))
+  (zip/node (edit-with {:from :tail :put :R} test-zipper)) => 6
+
+  (zip/root (edit-with {:from :tail :put :L :item nil} empty-zipper)) => 
+    '()
+  (zip/root (edit-with {:from :tail :put :R} empty-zipper)) => 
+    '()
+  (zip/node (edit-with {:from :tail :put :R} empty-zipper)) => '()  
+
+  (zip/root (edit-with {:from :tail :put :L :item nil} simple-zipper)) => 
+    '(:foo :bar :baz)
+  (zip/root (edit-with {:from :tail :put :R} simple-zipper)) => 
+    '(:foo :bar :baz)
+  (zip/node (edit-with {:from :tail :put :R} simple-zipper)) => 
+    :baz  )
+
+
 ;; translating genomes
+
+
 
 (fact "an empty genome produces an empty program"
   (zip->push [])=> [])
