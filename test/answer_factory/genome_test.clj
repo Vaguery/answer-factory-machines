@@ -629,6 +629,13 @@
     ))
 
 
+;; goto moves
+
+
+(fact "a tuple with an integer as its move leaves the cursor in the right place"
+  (zip/node (edit-with {:from 3 :put :L :item 99} test-zipper)) => 4
+)
+
 
 
 ;; translating genomes

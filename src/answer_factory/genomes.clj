@@ -170,57 +170,39 @@
       (zip/insert-right z item))))
 
 
+(defn move-cursor
+  "takes a zipper and a move instruction, and returns the modified zipper"
+  [z m]
+  (cond 
+    (integer? m)   (rewind z) ;; (jump-to z m)
+    (= m :head)    (rewind z)
+    (= m :tail)    (fast-forward z)
+    (= m :subhead) (goto-leftmost z)
+    (= m :append)  (goto-rightmost z)
+    (= m :left)    (wrap-left z)
+    (= m :right)   (wrap-right z)
+    (= m :prev)    (wrap-prev z)
+    (= m :next)    (wrap-next z)
+    (= m :up)      (step-up z)
+    (= m :down)    (step-down z)
+    :else z
+    ))
+
+
 (defn edit-with
   "takes a gene tuple and applies it to the zipper z, returning that"
   [tuple z]
-  (let [from-put [(:from tuple) (:put tuple)]
+  (let [mv   (:from tuple)
+        put  (:put tuple)
         item (:item tuple)]
-    (if (empty-zipper? z)
-        (if (nil? item)
-          z
-          (zip/down (zip/seq-zip (list item))))
-      (condp = from-put
-        [:head :L]
-          (-> z rewind (put-left item))
-        [:head :R]
-          (-> z rewind (put-right item))
-        [:tail :L]
-          (-> z fast-forward (put-left item))
-        [:tail :R]
-          (-> z fast-forward (put-right item))
-        [:subhead :L]
-          (-> z goto-leftmost (put-left item))
-        [:subhead :R]
-          (-> z goto-leftmost (put-right item))
-        [:left :L]
-          (-> z wrap-left (put-left item))
-        [:left :R]
-          (-> z wrap-left (put-right item))
-        [:right :L]
-          (-> z wrap-right (put-left item))
-        [:right :R]
-          (-> z wrap-right (put-right item))
-        [:prev :L]
-          (-> z wrap-prev (put-left item))
-        [:prev :R]
-          (-> z wrap-prev (put-right item))
-        [:next :L]
-          (-> z wrap-next (put-left item))
-        [:next :R]
-          (-> z wrap-next (put-right item))
-        [:up :L]
-          (-> z step-up (put-left item))
-        [:up :R]
-          (-> z step-up (put-right item))
-        [:down :L]
-          (-> z step-down (put-left item))
-        [:down :R]
-          (-> z step-down (put-right item))
-        [:append :L]
-          (-> z goto-rightmost (put-left item))
-        [:append :R]
-          (-> z goto-rightmost (put-right item))
-        z))))
+    (cond (empty-zipper? z)
+            (if (nil? item) z (zip/down (zip/seq-zip (list item))))
+          (= put :L)
+            (put-left (move-cursor z mv) item)
+          (= put :R)
+            (put-right (move-cursor z mv) item)
+          :else
+            z)))
 
 
 (defn zip->push
