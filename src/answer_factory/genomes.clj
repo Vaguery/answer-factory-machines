@@ -92,7 +92,7 @@
 
 
 (defn step-up
-  "moves the cursor up position, or to the head if it's already in the main list"
+  "moves the cursor up, or to the head if it's already in the main list"
   [z]
   (cond
     (root? z)
@@ -104,6 +104,19 @@
     :else
       (zip/up z)))
 
+
+(defn step-down
+  "moves the cursor down, or leave it where it is if it isn't sitting on a branch; if at the root or end, move it to the head first"
+  [z]
+  (cond
+    (root? z)
+      (rewind z)
+    (zip/end? z)
+      (rewind z)
+    :else
+      (if (nil? (zip/down z))
+        z
+        (zip/down z))))
 
 
 
@@ -169,6 +182,10 @@
           (-> z step-up (put-left item))
         [:up :R]
           (-> z step-up (put-right item))
+        [:down :L]
+          (-> z step-down (put-left item))
+        [:down :R]
+          (-> z step-down (put-right item))
         z))))
 
 
