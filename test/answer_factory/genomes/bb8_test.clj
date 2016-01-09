@@ -1,4 +1,4 @@
-(ns answer-factory.genome-test
+(ns answer-factory.genomes.bb8-test
   (:use midje.sweet)
   (:require [clojure.zip :as zip])
   (:use [answer-factory.genomes])
@@ -709,7 +709,40 @@
 ;; translating genomes
 
 
-
 (fact "an empty genome produces an empty program"
   (zip->push [])=> [])
 
+(fact "a flat genome produces the expected program"
+  (zip->push
+    [{:from :prev, :put :R, :item 1}      ;; [1]
+     {:from :down, :put :R, :item 2}      ;; [1 2]
+     {:from :append, :put :L, :item 3}    ;; [1 3 2]
+     {:from :left, :put :R, :item 4}      ;; [1 3 4 2]
+     {:from :up, :put :L, :item 5}        ;; [5 1 3 4 2]
+     {:from :right, :put :R, :item 6}]) => [5 1 3 6 4 2] )
+
+
+(fact "a genome with branches produces the expected program"
+  (zip->push
+    [{:from :prev, :put :R, :item 1}      ;; [«1»]
+     {:from :down, :put :L, :item '()}    ;; [(*) «1»]
+     {:from :append, :put :L, :item '()}  ;; [(*) (*) «1»]
+     {:from :prev, :put :L, :item 4}      ;; [(*) («4») 1]
+     {:from :prev, :put :R, :item 5}      ;; [(*) «(4)» 5 1]
+     {:from :prev, :put :R, :item 6}]) => ;; [(«6») (4) 5 1]
+      '[(6) (4) 5 1] )
+
+
+
+;; some problem examples
+
+(fact "this genome translates successfully"
+  (zip->push
+    [{:from :subhead, :put :L, :item ()}
+     {:from :left, :put :L, :item ()}
+     {:from 701, :put :R, :item ()}
+     {:from :up, :put :L, :item 1}
+     {:from :prev, :put :L, :item 2}
+     {:from :up, :put :R, :item 3}
+     {:from :prev, :put :R, :item 4}
+     ]) => '[2 3 1 (()) (4)])

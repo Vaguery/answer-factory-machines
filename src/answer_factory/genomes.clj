@@ -86,7 +86,7 @@
       (fast-forward z)
     (zip/end? z)
       (fast-forward z)
-    (= z (rewind z))
+    (root? (zip/prev z))
       (fast-forward z)
     :else
       (zip/prev z)))
@@ -118,7 +118,10 @@
     (zip/end? z)
       (rewind z)
     :else
-      (zip/up z)))
+      (if (nil? (zip/up z))
+        (rewind z)
+        (zip/up z))
+      ))
 
 
 (defn goto-rightmost
@@ -220,7 +223,12 @@
 (defn zip->push
   "takes a vector of tuples, and returns the Push program (as a vector)"
   [tuples]
-  tuples)
+  (into []
+    (zip/root
+      (reduce
+        (fn [z g] (apply-gene g z))
+        (zip/next (zip/seq-zip '()))
+        tuples))))
 
 
 
