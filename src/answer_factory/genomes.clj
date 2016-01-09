@@ -29,6 +29,20 @@
       (recur (zip/next loc)))))
 
 
+
+(defn count-cursorpoints
+  "returns the number of valid cursor positions in the zipper, not counting the root or end positions (that is, from the head to the tail only)"
+  [z]
+  (loop [c 1
+         loc (rewind z)]
+    (if (zip/end? (zip/next loc))
+      c
+      (recur
+        (inc c)
+        (zip/next loc)))))
+
+
+
 (defn goto-leftmost
   "moves the cursor to the leftmost item in the sublist, or the head if at root or end"
   [z]
@@ -36,6 +50,8 @@
     (if (root? lefty)
       (zip/down lefty)
       lefty)))
+
+
 
 
 (defn wrap-left
@@ -103,6 +119,20 @@
       (rewind z)
     :else
       (zip/up z)))
+
+
+(defn goto-rightmost
+  "moves the cursor to the rightmost position of the current subtree, or the rightmost of the main tree if at root or end"
+  [z]
+  (cond
+    (root? z)
+      (-> z rewind zip/rightmost)
+    (zip/end? z)
+      (-> z rewind zip/rightmost)
+    :else
+      (zip/rightmost z)))
+
+
 
 
 (defn step-down
@@ -186,6 +216,10 @@
           (-> z step-down (put-left item))
         [:down :R]
           (-> z step-down (put-right item))
+        [:append :L]
+          (-> z goto-rightmost (put-left item))
+        [:append :R]
+          (-> z goto-rightmost (put-right item))
         z))))
 
 

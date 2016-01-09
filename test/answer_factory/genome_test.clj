@@ -30,6 +30,14 @@
   (empty-zipper? empty-zipper) => true)
 
 
+(fact "count-cursorpoints returns the number of steps in a zipper"
+  (count-cursorpoints empty-zipper) => 1
+  (count-cursorpoints test-zipper) => 8
+  (count-cursorpoints simple-zipper) => 3
+  (count-cursorpoints stubby-zipper) => 7)
+
+
+
 ;; movers
 
 (fact "rewind moves the cursor of a zipper to its head (not its root!)"
@@ -181,7 +189,7 @@
     (zip/node (edit-with {:from :subhead :put :R :item 99} at-5)) => 4))
 
 
-(fact ":subtree tuples"
+(fact ":subhead tuples"
   (let [at-5
     (-> test-zipper zip/next zip/next zip/next zip/next zip/next zip/next)]
 
@@ -359,6 +367,58 @@
       '(:foo :bar :baz)
     (zip/node (edit-with {:from :right :put :R} simple-zipper)) => 
       :bar))
+
+
+;; append moves
+
+
+(fact "a tuple with :append as its move shifts the cursor to the append position of the subtree in which it was originally located"
+  (let [at-4
+    (-> test-zipper zip/next zip/next zip/next zip/next zip/next)]
+    (zip/node at-4) => 4
+
+    (zip/node (edit-with {:from :append :put :L :item 99} at-4)) => '(6)
+    (zip/node (edit-with {:from :append :put :R :item 99}
+      (-> at-4 zip/prev zip/prev))) => '(4 5 (6))))
+
+
+(fact ":append tuples"
+  (let [at-4
+    (-> test-zipper zip/next zip/next zip/next zip/next zip/next)]
+
+    (zip/root (edit-with {:from :append :put :L :item 99} at-4)) => 
+      '(1 2 3 (4 5 99 (6)))
+    (zip/root (edit-with {:from :append :put :R :item 99} at-4)) => 
+      '(1 2 3 (4 5 (6) 99))
+
+    (zip/root (edit-with {:from :append :put :L :item 99} empty-zipper)) => 
+      '(99)
+    (zip/root (edit-with {:from :append :put :R :item 99} empty-zipper)) => 
+      '(99)
+
+    (zip/root (edit-with {:from :append :put :L :item 99} simple-zipper)) => 
+      '(:foo :bar 99 :baz)
+    (zip/root (edit-with {:from :append :put :R :item 99} simple-zipper)) => 
+      '(:foo :bar :baz 99)
+    (zip/root (edit-with {:from :append :put :L :item 99}
+      (fast-forward simple-zipper))) =>  '(:foo :bar 99 :baz)
+    (zip/root (edit-with {:from :append :put :R :item 99}
+      (fast-forward simple-zipper))) =>  '(:foo :bar :baz 99)
+
+    (zip/root (edit-with {:from :append :put :L :item 99} stubby-zipper)) => 
+      '(() () ((99)))
+    (zip/root (edit-with {:from :append :put :R :item 99} stubby-zipper)) => 
+      '(() () ((99)))
+    (zip/root (edit-with {:from :append :put :L :item 99}
+      (zip/prev stubby-zipper))) => '(() () (99 ()))
+    (zip/root (edit-with {:from :append :put :L :item 99}
+      (-> stubby-zipper zip/prev zip/prev))) => '(() () 99 (()))
+    (zip/root (edit-with {:from :append :put :R :item 99}
+      (-> stubby-zipper zip/prev zip/prev))) => '(() () (()) 99)
+    (zip/root (edit-with {:from :append :put :R :item 99}
+      (rewind stubby-zipper))) => '(() () (()) 99)
+    ))
+
 
 
 ;; prev moves
