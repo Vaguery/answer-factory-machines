@@ -11,7 +11,16 @@
 (def test-zipper (zip/seq-zip '(1 2 3 (4 5 (6)))))
 (def empty-zipper (zip/seq-zip '()))
 (def simple-zipper (zip/seq-zip '(:foo :bar :baz)))
-(def stubby-zipper (zip/seq-zip '(() () (()))))
+
+;;                                            V cursor
+(def stubby-zipper (-> (zip/seq-zip '(() () (( ))))
+                        zip/next
+                        zip/next
+                        zip/next
+                        zip/next
+                        zip/next
+                        zip/next
+                        zip/next))
 
 
 ;; helpers
@@ -83,7 +92,10 @@
   (zip/root (edit-with {:from :head :put :L :item 99} simple-zipper)) => 
     '(99 :foo :bar :baz)
   (zip/root (edit-with {:from :head :put :R :item 99} simple-zipper)) => 
-    '(:foo 99 :bar :baz))
+    '(:foo 99 :bar :baz)
+
+  (zip/root (edit-with {:from :head :put :L :item 99} stubby-zipper)) => 
+    '(99 () () (())))
 
 
 
@@ -128,7 +140,13 @@
   (zip/root (edit-with {:from :tail :put :L :item 99} simple-zipper)) => 
     '(:foo :bar 99 :baz)
   (zip/root (edit-with {:from :tail :put :R :item 99} simple-zipper)) => 
-    '(:foo :bar :baz 99))
+    '(:foo :bar :baz 99)
+
+  (zip/root (edit-with {:from :tail :put :L :item 99} stubby-zipper)) => 
+    '(() () ((99)))
+  (zip/root (edit-with {:from :tail :put :L :item 99}
+    (-> stubby-zipper zip/prev zip/prev))) => '(() () ((99)))
+  )
 
 
 (fact ":tail nil tuples"
@@ -180,7 +198,15 @@
     (zip/root (edit-with {:from :subhead :put :L :item 99} simple-zipper)) => 
       '(99 :foo :bar :baz)
     (zip/root (edit-with {:from :subhead :put :R :item 99} simple-zipper)) => 
-      '(:foo 99 :bar :baz)))
+      '(:foo 99 :bar :baz)
+
+    (zip/root (edit-with {:from :subhead :put :L :item 99} stubby-zipper)) => 
+      '(() () ((99)))
+    (zip/root (edit-with {:from :subhead :put :L :item 99}
+      (zip/prev stubby-zipper))) => '(() () (99 ()))
+    (zip/root (edit-with {:from :subhead :put :L :item 99}
+      (-> stubby-zipper zip/prev zip/prev))) => '(99 () () (()))
+      ))
 
 
 (fact ":subhead nil tuples"
@@ -238,13 +264,14 @@
       '(:foo :bar :baz 99)
 
     (zip/root (edit-with {:from :left :put :L :item 99} stubby-zipper)) => 
-      '(() () 99 (()))
+      '(() () ((99)))
     (zip/root (edit-with {:from :left :put :L :item 99}
-      (zip/next (zip/next stubby-zipper)))) => 
-      '((99) () (()))
-
-
-      ))
+      (zip/prev stubby-zipper))) => '(() () (99 ()))
+    (zip/root (edit-with {:from :left :put :L :item 99}
+      (-> stubby-zipper zip/prev zip/prev))) => '(() 99 () (()))
+    (zip/root (edit-with {:from :left :put :R :item 99}
+      (rewind stubby-zipper))) => '(() () (()) 99)
+    ))
 
 
 (fact ":left nil tuples"

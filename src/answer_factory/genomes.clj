@@ -55,7 +55,9 @@
   [z item]
   (if (nil? item)
     z
-    (zip/insert-left z item)))
+    (if (nil? (zip/node z))
+      (zip/replace z item)
+      (zip/insert-left z item))))
 
 
 (defn put-right
@@ -63,7 +65,9 @@
   [z item]
   (if (nil? item)
     z
-    (zip/insert-right z item)))
+    (if (nil? (zip/node z))
+      (zip/replace z item)
+      (zip/insert-right z item))))
 
 
 (defn edit-with
