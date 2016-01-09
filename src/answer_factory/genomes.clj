@@ -170,11 +170,24 @@
       (zip/insert-right z item))))
 
 
+(defn scroll-to-index
+  "takes a zipper and an integer, and steps (using zip/next) to the indicated 0-based index, starting at the head"
+  [z idx]
+  (nth (iterate zip/next (rewind z)) idx))
+
+
+(defn jump-to
+  "calculates index in Push style (modulo count-cursorpoints) and scrolls to that position"
+  [z idx]
+  (let [i (mod idx (count-cursorpoints z))]
+    (scroll-to-index z i)))
+
+
 (defn move-cursor
   "takes a zipper and a move instruction, and returns the modified zipper"
   [z m]
   (cond 
-    (integer? m)   (rewind z) ;; (jump-to z m)
+    (integer? m)   (jump-to z m)
     (= m :head)    (rewind z)
     (= m :tail)    (fast-forward z)
     (= m :subhead) (goto-leftmost z)
@@ -185,8 +198,7 @@
     (= m :next)    (wrap-next z)
     (= m :up)      (step-up z)
     (= m :down)    (step-down z)
-    :else z
-    ))
+    :else z))
 
 
 (defn edit-with
@@ -209,3 +221,6 @@
   "takes a vector of tuples, and returns the Push program (as a vector)"
   [tuples]
   tuples)
+
+
+

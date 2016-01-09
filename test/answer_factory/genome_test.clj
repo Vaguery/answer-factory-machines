@@ -632,9 +632,77 @@
 ;; goto moves
 
 
+(fact "scroll-to-index works for numbers in range, then bottoms out"
+  (zip/node (scroll-to-index test-zipper 0)) => 1
+  (zip/node (scroll-to-index test-zipper 1)) => 2
+  (zip/node (scroll-to-index test-zipper 2)) => 3
+  (zip/node (scroll-to-index test-zipper 3)) => '(4 5 (6))
+  (zip/node (scroll-to-index test-zipper 4)) => 4
+  (zip/node (scroll-to-index test-zipper 5)) => 5
+  (zip/node (scroll-to-index test-zipper 6)) => '(6)
+  (zip/node (scroll-to-index test-zipper 7)) => 6
+  (zip/node (scroll-to-index test-zipper 8)) => (zip/node test-zipper)
+  (zip/node (scroll-to-index test-zipper 9)) => (zip/node test-zipper)
+  (zip/node (scroll-to-index test-zipper -3)) => (throws)
+  )
+
+
+(fact "jump-to works for any number, modulo count-cursorpoints"
+  (zip/node (jump-to test-zipper 0)) => 1
+  (zip/node (jump-to test-zipper 1)) => 2
+  (zip/node (jump-to test-zipper 11)) => '(4 5 (6))
+  (zip/node (jump-to test-zipper -1)) => 6
+  (zip/node (jump-to test-zipper -2)) => '(6)
+  (zip/node (jump-to test-zipper -5)) => '(4 5 (6))
+  (zip/node (jump-to test-zipper 100212)) => 4
+
+  (zip/node (jump-to empty-zipper 100212)) => nil
+
+  (zip/node (jump-to simple-zipper 8812)) => :bar
+  (zip/node (jump-to simple-zipper -8812)) => :baz
+
+  (zip/node (jump-to stubby-zipper 0)) => '()
+  (zip/node (jump-to stubby-zipper 1)) => nil
+  (zip/node (jump-to stubby-zipper 11)) => '(())
+  (zip/node (jump-to stubby-zipper -2)) => '()
+  )
+
+
 (fact "a tuple with an integer as its move leaves the cursor in the right place"
-  (zip/node (edit-with {:from 3 :put :L :item 99} test-zipper)) => 4
-)
+  (zip/node (edit-with {:from 3 :put :L :item 99} test-zipper)) => '(4 5 (6)))
+
+
+(fact "jump-to tuples"
+  (zip/root (edit-with {:from 0 :put :L :item 99} test-zipper)) => 
+    '(99 1 2 3 (4 5 (6)))
+  (zip/root (edit-with {:from -1 :put :R :item 99} test-zipper)) => 
+    '(1 2 3 (4 5 (6 99)))
+  (zip/root (edit-with {:from -2 :put :R :item 99} test-zipper)) => 
+    '(1 2 3 (4 5 (6) 99))
+
+  (zip/root (edit-with {:from 33 :put :L :item 99} empty-zipper)) => 
+    '(99)
+  (zip/root (edit-with {:from 33 :put :R :item 99} empty-zipper)) => 
+    '(99)
+
+  (zip/root (edit-with {:from 31 :put :L :item 99} simple-zipper)) => 
+    '(:foo 99 :bar :baz)
+  (zip/root (edit-with {:from 31 :put :R :item 99} simple-zipper)) => 
+    '(:foo :bar 99 :baz)
+  (zip/root (edit-with {:from -1 :put :L :item 99}
+    (fast-forward simple-zipper))) =>  '(:foo :bar 99 :baz)
+  (zip/root (edit-with {:from -1 :put :R :item 99}
+    (fast-forward simple-zipper))) =>  '(:foo :bar :baz 99)
+
+  (zip/root (edit-with {:from 1 :put :L :item 99} stubby-zipper)) => 
+    '((99) () (()))
+  (zip/root (edit-with {:from 2 :put :R :item 99} stubby-zipper)) => 
+    '(() () 99 (()))
+  (zip/root (edit-with {:from -2 :put :L :item 99}
+    (zip/prev stubby-zipper))) => '(() () (99 ()))
+  (zip/root (edit-with {:from -3 :put :L :item 99}
+    (-> stubby-zipper zip/prev zip/prev))) => '(() () 99 (()))
+  )
 
 
 
