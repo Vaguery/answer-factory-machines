@@ -201,7 +201,7 @@
     :else z))
 
 
-(defn edit-with
+(defn apply-gene
   "takes a gene tuple and applies it to the zipper z, returning that"
   [tuple z]
   (let [mv   (:from tuple)
