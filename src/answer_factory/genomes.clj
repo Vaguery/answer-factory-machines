@@ -62,6 +62,20 @@
       (zip/right z)))
 
 
+(defn wrap-prev
+  "moves the cursor to the previous position, or to the tail if it's already at the head"
+  [z]
+  (cond
+    (root? z)
+      (fast-forward z)
+    (zip/end? z)
+      (fast-forward z)
+    (= z (rewind z))
+      (fast-forward z)
+    :else
+      (zip/prev z)))
+
+
 
 (defn put-left
   "inserts the item to the left of the cursor, unless it's nil"
@@ -113,6 +127,10 @@
           (-> z wrap-right (put-left item))
         [:right :R]
           (-> z wrap-right (put-right item))
+        [:prev :L]
+          (-> z wrap-prev (put-left item))
+        [:prev :R]
+          (-> z wrap-prev (put-right item))
         z))))
 
 
