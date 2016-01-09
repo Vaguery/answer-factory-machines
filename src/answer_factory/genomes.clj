@@ -50,6 +50,19 @@
       (zip/left z)))
 
 
+(defn wrap-right
+  "moves the cursor to the right one step, or to the rightmost if it's already at the right"
+  [z]
+  (cond
+    (root? z)
+      (zip/right (zip/next z))
+    (nil? (zip/right z))
+      (zip/leftmost z)
+    :else
+      (zip/right z)))
+
+
+
 (defn put-left
   "inserts the item to the left of the cursor, unless it's nil"
   [z item]
@@ -96,6 +109,10 @@
           (-> z wrap-left (put-left item))
         [:left :R]
           (-> z wrap-left (put-right item))
+        [:right :L]
+          (-> z wrap-right (put-left item))
+        [:right :R]
+          (-> z wrap-right (put-right item))
         z))))
 
 

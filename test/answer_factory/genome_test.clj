@@ -295,10 +295,70 @@
     (zip/root (edit-with {:from :left :put :R} simple-zipper)) => 
       '(:foo :bar :baz)
     (zip/node (edit-with {:from :left :put :R} simple-zipper)) => 
-      :baz  ))
+      :baz))
 
 
+;; right moves
 
+
+(fact "a tuple with :right as its move leaves the cursor in the right place"
+  (let [in-subtree
+    (-> test-zipper zip/next zip/next zip/next zip/next zip/next zip/next)]
+    (zip/node in-subtree) => 5
+    (zip/node (edit-with {:from :right :put :L :item 99} in-subtree)) => '(6)
+    (zip/node (edit-with {:from :right :put :R :item 99} in-subtree)) => '(6)))
+
+
+(fact ":right tuples"
+  (let [in-subtree
+    (-> test-zipper zip/next zip/next zip/next zip/next zip/next zip/next)]
+
+    (zip/root (edit-with {:from :right :put :L :item 99} in-subtree)) => 
+      '(1 2 3 (4 5 99 (6)))
+    (zip/root (edit-with {:from :right :put :R :item 99} in-subtree)) => 
+      '(1 2 3 (4 5 (6) 99))
+
+    (zip/root (edit-with {:from :right :put :L :item 99} empty-zipper)) => 
+      '(99)
+    (zip/root (edit-with {:from :right :put :R :item 99} empty-zipper)) => 
+      '(99)
+
+    (zip/root (edit-with {:from :right :put :L :item 99} simple-zipper)) => 
+      '(:foo 99 :bar :baz)
+    (zip/root (edit-with {:from :right :put :R :item 99} simple-zipper)) => 
+      '(:foo :bar 99 :baz)
+    (zip/root (edit-with {:from :right :put :L :item 99}
+      (fast-forward simple-zipper))) =>  '(99 :foo :bar :baz)
+    (zip/root (edit-with {:from :right :put :R :item 99}
+      (fast-forward simple-zipper))) =>  '(:foo 99 :bar :baz)
+
+    (zip/root (edit-with {:from :right :put :L :item 99} stubby-zipper)) => 
+      '(() () ((99)))
+    (zip/root (edit-with {:from :right :put :L :item 99}
+      (zip/prev stubby-zipper))) => '(() () (99 ()))
+    (zip/root (edit-with {:from :right :put :L :item 99}
+      (-> stubby-zipper zip/prev zip/prev))) => '(99 () () (()))
+    (zip/root (edit-with {:from :right :put :R :item 99}
+      (rewind stubby-zipper))) => '(() () 99 (()))
+    ))
+
+
+(fact ":right nil tuples"
+  (let [in-subtree
+    (-> test-zipper zip/next zip/next zip/next zip/next zip/next zip/next)]
+
+    (zip/root (edit-with {:from :right :put :L :item nil} in-subtree)) => 
+      '(1 2 3 (4 5 (6)))
+    (zip/node (edit-with {:from :right :put :R} in-subtree)) => '(6)
+
+    (zip/root (edit-with {:from :right :put :L :item nil} empty-zipper)) => 
+      '()
+    (zip/node (edit-with {:from :right :put :R} empty-zipper)) => '()  
+
+    (zip/root (edit-with {:from :right :put :L :item nil} simple-zipper)) => 
+      '(:foo :bar :baz)
+    (zip/node (edit-with {:from :right :put :R} simple-zipper)) => 
+      :bar))
 
 
 
