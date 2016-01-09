@@ -463,6 +463,65 @@
     ))
 
 
+;; up moves
+
+
+(fact "a tuple with :up as its move leaves the cursor in the right place"
+  (let [at-4
+    (-> test-zipper zip/next zip/next zip/next zip/next zip/next)]
+    (zip/node at-4) => 4
+    (zip/node (edit-with {:from :up :put :L :item 99} at-4)) => '(4 5 (6))
+    (zip/node (edit-with {:from :up :put :L :item 99}
+      (fast-forward test-zipper))) => '(6)
+    ))
+
+
+(fact ":up tuples"
+  (let [at-4
+    (-> test-zipper zip/next zip/next zip/next zip/next zip/next)]
+
+    (zip/root (edit-with {:from :up :put :L :item 99} at-4)) => 
+      '(1 2 3 99 (4 5 (6)))
+    (zip/root (edit-with {:from :up :put :R :item 99} at-4)) => 
+      '(1 2 3 (4 5 (6)) 99)
+
+    (zip/root (edit-with {:from :up :put :L :item 99} empty-zipper)) => 
+      '(99)
+    (zip/root (edit-with {:from :up :put :R :item 99} empty-zipper)) => 
+      '(99)
+
+    (zip/root (edit-with {:from :up :put :L :item 99} simple-zipper)) => 
+      '(99 :foo :bar :baz)
+    (zip/root (edit-with {:from :up :put :R :item 99} simple-zipper)) => 
+      '(:foo 99 :bar :baz)
+    (zip/root (edit-with {:from :up :put :L :item 99}
+      (fast-forward simple-zipper))) =>  '(99 :foo :bar :baz)
+    (zip/root (edit-with {:from :up :put :R :item 99}
+      (fast-forward simple-zipper))) =>  '(:foo 99 :bar :baz)
+
+    (zip/root (edit-with {:from :up :put :L :item 99} stubby-zipper)) => 
+      '(() () (99 ()))
+    (zip/root (edit-with {:from :up :put :R :item 99} stubby-zipper)) => 
+      '(() () (() 99))
+    (zip/root (edit-with {:from :up :put :L :item 99}
+      (zip/prev stubby-zipper))) => '(() () 99 (()))
+    (zip/root (edit-with {:from :up :put :L :item 99}
+      (-> stubby-zipper zip/prev zip/prev))) => '(99 () () (()))
+    (zip/root (edit-with {:from :up :put :R :item 99}
+      (-> stubby-zipper zip/prev zip/prev))) => '(() 99 () (()))
+    (zip/root (edit-with {:from :up :put :R :item 99}
+      (rewind stubby-zipper))) => '(() 99 () (()))
+    (zip/root (edit-with {:from :up :put :R :item 99}
+      (zip/next (rewind stubby-zipper)))) => '(() 99 () (()))
+    ))
+
+
+
+
+
+
+
+
 ;; translating genomes
 
 

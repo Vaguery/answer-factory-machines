@@ -91,6 +91,21 @@
       (zip/next z)))
 
 
+(defn step-up
+  "moves the cursor up position, or to the head if it's already in the main list"
+  [z]
+  (cond
+    (root? z)
+      (rewind z)
+    (root? (zip/up z))
+      (rewind z)
+    (zip/end? z)
+      (rewind z)
+    :else
+      (zip/up z)))
+
+
+
 
 (defn put-left
   "inserts the item to the left of the cursor, unless it's nil"
@@ -150,6 +165,10 @@
           (-> z wrap-next (put-left item))
         [:next :R]
           (-> z wrap-next (put-right item))
+        [:up :L]
+          (-> z step-up (put-left item))
+        [:up :R]
+          (-> z step-up (put-right item))
         z))))
 
 
