@@ -746,3 +746,4 @@
      {:from :up, :put :R, :item 3}
      {:from :prev, :put :R, :item 4}
      ]) => '[2 3 1 (()) (4)])
+
