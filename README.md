@@ -26,6 +26,7 @@ Preliminary work only so far. [An earlier Ruby-based system](https://github.com/
 
 ### Plan
 
+- re-implement [Plush genomes (from Clojush)](https://github.com/lspector/Clojush), just-the-program genomes and BB8 schemes as representations for [Push](https://github.com/Vaguery/push-in-clojure) programs
 - Simple single-machine population-based GP algorithms with [Push](https://github.com/Vaguery/push-in-clojure), in support of colleagues using [Clojush](https://github.com/lspector/Clojush) for active research projects
 - Distributed cloud-based version
 - Interactivity with long-term searches
