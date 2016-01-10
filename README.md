@@ -22,7 +22,7 @@ GP (whether you think of it as "genetic programming" or "generative" as I prefer
 
 ### Status
 
-Preliminary work only so far. [An earlier Rub-based system](https://github.com/Vaguery/Answer-Factory) is the inspiration, but this Clojure-and-Javascript thing is being designed for modern cloud systems.
+Preliminary work only so far. [An earlier Ruby-based system](https://github.com/Vaguery/Answer-Factory) is the inspiration, but this Clojure-and-Javascript thing is being designed for modern cloud systems.
 
 ### Plan
 
@@ -36,9 +36,11 @@ Preliminary work only so far. [An earlier Rub-based system](https://github.com/V
 Nothing for the moment.
 
 
+## Testing
+
 The project uses [Midje](https://github.com/marick/Midje/).
 
-## How to run the tests
+### How to run the tests
 
 `lein midje` will run all tests.
 
