@@ -1,7 +1,7 @@
 (ns answer-factory.genomes.bb8-test
   (:use midje.sweet)
   (:require [clojure.zip :as zip])
-  (:use [answer-factory.genomes])
+  (:use [answer-factory.genomes.bb8])
   (:use clojure.pprint))
 
 
@@ -710,10 +710,10 @@
 
 
 (fact "an empty genome produces an empty program"
-  (zip->push [])=> [])
+  (bb8->push [])=> [])
 
 (fact "a flat genome produces the expected program"
-  (zip->push
+  (bb8->push
     [{:from :prev, :put :R, :item 1}      ;; [1]
      {:from :down, :put :R, :item 2}      ;; [1 2]
      {:from :append, :put :L, :item 3}    ;; [1 3 2]
@@ -723,7 +723,7 @@
 
 
 (fact "a genome with branches produces the expected program"
-  (zip->push
+  (bb8->push
     [{:from :prev, :put :R, :item 1}      ;; [«1»]
      {:from :down, :put :L, :item '()}    ;; [(*) «1»]
      {:from :append, :put :L, :item '()}  ;; [(*) (*) «1»]
@@ -737,10 +737,10 @@
 ;; some problem examples
 
 (fact "this genome translates successfully"
-  (zip->push
-    [{:from :subhead, :put :L, :item ()}
-     {:from :left, :put :L, :item ()}
-     {:from 701, :put :R, :item ()}
+  (bb8->push
+    [{:from :subhead, :put :L, :item '()}
+     {:from :left, :put :L, :item '()}
+     {:from 701, :put :R, :item '()}
      {:from :up, :put :L, :item 1}
      {:from :prev, :put :L, :item 2}
      {:from :up, :put :R, :item 3}

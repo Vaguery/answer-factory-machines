@@ -1,7 +1,7 @@
 (ns answer-factory.genomes.bb8-uniformity-test
   (:use midje.sweet)
   (:require [clojure.zip :as zip])
-  (:use [answer-factory.genomes])
+  (:use [answer-factory.genomes.bb8])
   (:use clojure.pprint))
 
 
@@ -40,34 +40,4 @@
     (map 
       #(assoc (random-gene) :item %)
       (some-items numbers branches))))
-
-
-;; bug-catching
-
-(dotimes [n 100]
-  (let [t (random-tree 10 10)]
-      (try
-        (println (zip->push t))
-      (catch Exception e (println (str (pprint t) "Exception: " (.getMessage e)))))))
-  
-
-
-(println "\n\n")
-
-
-(def starter (random-tree 18 8))
-
-(pprint starter)
-
-(defn mutate
-  [g]
-  (assoc-in g [(rand-int (count g)) :from] (any-move)))
-
-
-(def walking
-  (take 100
-    (iterate #(mutate %) starter)))
-
-
-(pprint (map zip->push walking))
 

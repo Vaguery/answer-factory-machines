@@ -1,4 +1,4 @@
-(ns answer-factory.genomes
+(ns answer-factory.genomes.bb8
   (:require [clojure.zip :as zip]))
 
 
@@ -220,7 +220,7 @@
             z)))
 
 
-(defn zip->push
+(defn bb8->push
   "takes a vector of tuples, and returns the Push program (as a vector)"
   [tuples]
   (into []
