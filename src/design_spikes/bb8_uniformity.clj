@@ -1,4 +1,4 @@
-(ns answer-factory.genomes.bb8-uniformity-test
+(ns design-spikes.bb8-uniformity
   (:use midje.sweet)
   (:require [clojure.zip :as zip])
   (:use [answer-factory.genomes.bb8])
