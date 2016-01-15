@@ -42,9 +42,9 @@
   []
   (condp = (rand-int 10)
     0 true 
-    1 (* 100.0 (rand))
+    1 (* 10.0 (rand))
     3 false
-    (rand-int 100)
+    (rand-int 10)
     ))
 
 
@@ -83,13 +83,50 @@
 (def x-runner (p/interpreter :inputs {:a 8 :b 9}))
 
 
-(println
-  (map #(peek (p/get-stack (p/run
-                        x-runner
-                        (bb8->push x)
-                        1000
-                        :inputs {:a % :b (* % 11)}) 
-                      :integer))
-        (range 0 10)))
+
+; (dotimes [n 100]
+;   (let [g (random-genome (p/interpreter :inputs {:a 8 :b 11}) 0.1 100)]
+;     (println "\n")
+;     (println (bb8->push g))
+;     (let [c (map #(peek (p/get-stack
+;                             (p/run 
+;                               x-runner
+;                               (bb8->push g)
+;                               1000 :inputs {:a % :b (* % -8)})
+;                             :integer)) (range 0 20))]
+;     (println c)
+;     (println (count (remove nil? c))))
+;   ))
+
+
+(defn run-over-input-range
+  [genome]
+  (map #(peek (p/get-stack
+                (p/run 
+                  x-runner
+                  (bb8->push genome)
+                  1000 :inputs {:a % :b (* % -8)})
+                :integer)) (range -10 10)))
+
+
+(loop [collection {}
+       g (random-genome (p/interpreter :inputs {:a 8 :b 11}) 0.1 50)
+       feature-vec (run-over-input-range g)
+       counter 0]
+  (if (> (count collection) 30)
+    (do
+      (pprint (for [[k v] collection]  (str (into [] k) " " (count v))))
+      collection)
+    (do
+      (println (str counter " " (count (keys collection))))
+      (recur  (assoc
+              collection
+              feature-vec
+              (conj (get collection feature-vec #{}) g))
+            (random-genome (p/interpreter :inputs {:a 8 :b 11}) 0.1 10) ;; g
+            (run-over-input-range g) ;; feature-vec
+            (inc counter)
+       ))))
+
 
 
