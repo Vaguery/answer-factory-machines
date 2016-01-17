@@ -4,7 +4,8 @@
   (:require [push.core :as p])
   (:require [push.interpreter.core :as i])
   (:use [answer-factory.genomes.bb8])
-  (:use clojure.pprint))
+  (:use clojure.pprint)
+  (:use clojure.data))
 
 
 ;; fixtures
@@ -75,58 +76,98 @@
   (into [] (repeatedly size #(random-gene interpreter prob))))
 
 
-(def x (random-genome (p/interpreter :inputs {:a 8 :b 11}) 0.1 100 ))
+(def x (random-genome (p/interpreter :inputs {:a 8 :b 11}) 0.1 10 ))
+(def y (random-genome (p/interpreter :inputs {:a 8 :b 11}) 0.1 10 ))
 
-; (pprint x)
-; (println )
+
+(defn point-crossover
+  [mom dad]
+  (into [] (concat
+
+      (take (max (rand-int (count mom)) 1) mom)
+      (drop (min (rand-int (count dad)) (dec (count dad))) dad))))
+
+
+(fact "point-crossover does a thing"
+  (first (point-crossover x y)) => (first x)
+  (last (point-crossover x y)) => (last y))
+
+
+(defn uniform-crossover
+  [mom dad]
+  (map
+    #(if (< (rand) 0.5)
+      (nth mom %)
+      (nth dad %))
+    (range 0 (count mom))))
+
+
+(fact "uniform-crossover does a thing"
+  (count (uniform-crossover x y)) => (count x)
+  (concat x y) => (contains (uniform-crossover x y) :gaps-ok :in-any-order))
+
+
+
+
+(defn item-mutate
+  [genome interpreter prob]
+  (assoc-in
+    genome 
+    [(rand-int (count genome)) :item]
+    (random-item interpreter prob)))
+
+
+(fact "mutation does a thing"
+  (map :item (item-mutate x (p/interpreter :inputs {:a 8 :b 9}) 0.1)) =not=>
+    (map :item x))
+
+
+(defn gene-mutate
+  [genome interpreter prob]
+  (assoc
+    genome 
+    (rand-int (count genome))
+    (random-gene interpreter prob)))
+
+
+(fact "mutation does a thing"
+  (bb8->push (gene-mutate x (p/interpreter :inputs {:a 8 :b 9}) 0.1)) =not=> 
+  (bb8->push x))
+
+
 
 (def x-runner (p/interpreter :inputs {:a 8 :b 9}))
 
 
-
-; (dotimes [n 100]
-;   (let [g (random-genome (p/interpreter :inputs {:a 8 :b 11}) 0.1 100)]
-;     (println "\n")
-;     (println (bb8->push g))
-;     (let [c (map #(peek (p/get-stack
-;                             (p/run 
-;                               x-runner
-;                               (bb8->push g)
-;                               1000 :inputs {:a % :b (* % -8)})
-;                             :integer)) (range 0 20))]
-;     (println c)
-;     (println (count (remove nil? c))))
-;   ))
-
-
 (defn run-over-input-range
   [genome]
-  (map #(peek (p/get-stack
+  (into []
+    (map #(p/get-stack
                 (p/run 
                   x-runner
                   (bb8->push genome)
-                  1000 :inputs {:a % :b (* % -8)})
-                :integer)) (range -10 10)))
+                  300 :inputs {:a % :b (* % -8.7)})
+                :boolean) (range -10 10))))
 
 
-(loop [collection {}
-       g (random-genome (p/interpreter :inputs {:a 8 :b 11}) 0.1 50)
-       feature-vec (run-over-input-range g)
-       counter 0]
-  (if (> (count collection) 30)
-    (do
-      (pprint (for [[k v] collection]  (str (into [] k) " " (count v))))
-      collection)
-    (do
-      (println (str counter " " (count (keys collection))))
-      (recur  (assoc
-              collection
-              feature-vec
-              (conj (get collection feature-vec #{}) g))
-            (random-genome (p/interpreter :inputs {:a 8 :b 11}) 0.1 10) ;; g
-            (run-over-input-range g) ;; feature-vec
-            (inc counter)
-       ))))
+; (loop [collection {}
+;        g (random-genome x-runner 0.2 20)
+;        feature-vec (run-over-input-range g)
+;        counter 0]
+;   (if (> (count collection) 50)
+;     (do
+;       (println (sort-by first (for [[k v] collection] [(count v) (into [] k)])))
+;       collection)
+;     (do
+;       (println (str counter " " (count collection)))
+;       (recur  (assoc
+;               collection
+;               feature-vec
+;               (conj (get collection feature-vec #{}) g))
+;             (gene-mutate g x-runner 0.2) ;; g
+;             (run-over-input-range g) ;; feature-vec
+;             (inc counter)
+;        ))))
 
 
 
