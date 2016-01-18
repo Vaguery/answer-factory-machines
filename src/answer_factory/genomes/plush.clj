@@ -1,10 +1,17 @@
-(ns answer-factory.genomes.plush)
+(ns answer-factory.genomes.plush
+  (:require [clojure.zip :as zip]))
 
 
+;; the loop is initialized with
+;; - depth = 0
+;; - openings = 0
+;; - closings = 0
+;;
 
 (defn plush->push
-  "takes a plush genome and an optional branching-map, and returns the translated push program"
+  "translates"
   ([genome]
     (plush->push genome {}))
-  ([genome branching-map]
-    (map :item genome)))
+  ([genome branch-map]
+  genome))
+
