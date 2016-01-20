@@ -48,6 +48,57 @@
       zip/down))
 
 
+(defn last-closed-block
+  "returns nil if not found, otherwise returns the zipper with the cursor moved up and then left (and with :PLACEHOLDER inserted to the right of the original cursor position)"
+  [z]
+  (loop [loc (move-up-safely (zip/insert-right z :PLACEHOLDER))]
+    (cond
+      (bb8/root? loc) nil
+      (and (empty? (zip/lefts loc))
+           (some? (zip/up loc))) (recur (zip/up loc))
+      (and (zip/branch? loc)
+           (not-any? #(= % :PLACEHOLDER) (zip/children loc))) loc
+      :else (recur (zip/left loc)))))
+
+
+(defn lift-sublist
+  "if the cursor in the zipper holds a sub-list, it is replaced with its own children; otherwise, the zipper is returned unchanged"
+  [z]
+  (if (not (zip/branch? z))
+    z
+    (let [c (zip/children z)]
+      (loop [loc       (zip/replace z (first c))
+             remainder (rest c)]
+        (if (empty? remainder)
+          loc
+          (recur (-> loc
+                     (zip/insert-right (first remainder))
+                     (zip/right))
+                 (rest remainder)))))))
+
+
+(defn undo-placeholder
+  "takes a zipper which may have a (single) :PLACEHOLDER item somewhere; if present, it's removed and the cursor is left in the previous position; if absent, the zipper is returned unchanged"
+  [z]
+  (loop [loc (bb8/rewind z)]
+    (cond
+      (zip/end? loc)
+        z
+      (= :PLACEHOLDER (zip/node (zip/next loc)))
+        (-> loc zip/right zip/remove)
+      :else
+        (recur (zip/next loc)))))
+
+
+(defn lift-last-closed-block
+  "if there is a 'last closed block' relative to the current cursor position, it is 'lifted' to its parent's level; otherwise, the zipper is returned unchanged"
+  [z]
+  (if (some? (last-closed-block z))
+    (undo-placeholder (lift-sublist (last-closed-block z)))
+    z))
+
+
+
 (defn close-up-one
   "takes a tuple composed of a program (zipper) and a branch-stack (seq) from which it pops an item; if the branch-stack is empty, it returns the tuple unchanged; if the popped item is `:AGAIN` it moves the cursor to an empty 'sibling' sub-tree it creates; if `:END` it simply moves up a level"
   [[program branch-stack]]
@@ -92,6 +143,8 @@
       (-> (cond
             (= item :noop_open_paren)
               [(begin-branch program) branch-stack]
+            (= item :noop_delete_prev_paren_pair)
+              [(lift-last-closed-block program) branch-stack]
             (pos? branches)
               [(-> program
                    (append-token item)

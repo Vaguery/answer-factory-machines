@@ -50,7 +50,6 @@
       (bb8/fast-forward (zip/seq-zip '(1 2 (3 4 (88)))))
       99)) => '(1 2 (3 4 (88) (99))))
 
-
 ;; genes
 
 ;; fixture
@@ -194,12 +193,64 @@
       '(1 2 (3 4 (99)) ()))
 
 
-;; empty gene
+;; noop_delete_prev_paren_pair
 
-;; simple programs, no branches
 
-;; only branching
+(fact "last-closed-block moves the cursor accordingly, after inserting a :PLACEHOLDER"
+  (zip/node (last-closed-block little-tree)) => '(3 4 (99 :PLACEHOLDER))
 
+  (zip/node (last-closed-block
+    (bb8/fast-forward (zip/seq-zip '(1 2 3 4 (5) 6 7 8 (9)))))) => '(5)
+  (zip/root (last-closed-block
+    (bb8/fast-forward (zip/seq-zip '(1 2 3 4 (5) 6 7 8 (9)))))) =>
+      '(1 2 3 4 (5) 6 7 8 (9 :PLACEHOLDER))
+
+  (zip/node (last-closed-block
+    (bb8/fast-forward (zip/seq-zip '(1 ((2 3) (4 5) 6 7) 8 (9)))))) =>
+      '((2 3) (4 5) 6 7))
+
+
+(fact "last-closed-block returns nil if no prior blocks are found"
+  (last-closed-block
+    (bb8/fast-forward (zip/seq-zip '(1 2 3 4 5 6 7 8 (9))))) => nil)
+
+
+(fact "lift-sublist replaces the sublist at the cursor with its children"
+  (zip/root (lift-sublist (last-closed-block little-tree))) =>
+    '(1 2 3 4 (99 :PLACEHOLDER))
+  (zip/root
+    (lift-sublist
+      (last-closed-block
+        (bb8/fast-forward (zip/seq-zip '(1 ((2 3) (4 5) 6 7) 8 (9))))))) =>
+                                       '(1  (2 3) (4 5) 6 7  8 (9 :PLACEHOLDER)))
+
+
+(fact "lift-sublist has no effect if the cursor is not at a list"
+  (lift-sublist little-tree) => little-tree)
+
+
+(fact "undo-placeholder moves the cursor back and deletes the :PLACEHOLDER"
+  (zip/root (undo-placeholder (last-closed-block little-tree))) =>
+    (zip/root little-tree)
+  (zip/node (undo-placeholder (last-closed-block little-tree))) =>
+    (zip/node little-tree))
+
+
+(fact "undo-placeholder doesn't blow up when there is no :PLACEHOLDER mark"
+  (zip/root (undo-placeholder little-tree)) => (zip/root little-tree))
+
+
+(fact "lift-last-closed-block does what it says"
+  (zip/root (lift-last-closed-block little-tree)) => '(1 2 3 4 (99)) 
+
+  (zip/root
+    (lift-last-closed-block
+      (bb8/fast-forward (zip/seq-zip '(1 ((2 3) (4 5) 6 7) 8 (9)))))) =>
+                                     '(1  (2 3) (4 5) 6 7  8 (9))
+  (zip/root
+    (lift-last-closed-block
+      (bb8/fast-forward (zip/seq-zip '(1 2 3 4 5 6 7 8 (9)))))) =>
+                                     '(1 2 3 4 5 6 7 8 (9)))
 
 
 ;; apply-one-gene-to-state
@@ -275,8 +326,7 @@
     (apply-one-gene-to-state
       [little-tree '()]
       {:item :foo :close 99}
-      {:foo 6})) => '()    
-  )
+      {:foo 6})) => '()    )
 
 
 (fact "silent gene"
@@ -349,6 +399,23 @@
 
 ;; some acceptance tests & bug fixes
 
+
+(def helmuth-1
+  [ {:item :exec-do*times   :close 0}
+    {:item 8                :close 0}
+    {:item 11               :close 3}
+    {:item :integer-add     :close 0 :silent true}
+    {:item :exec-if         :close 1}
+    {:item 17               :close 0}
+    {:item :noop_open_paren :close 0}
+    {:item false            :close 0}
+    {:item :code-quote      :close 0}
+    {:item :float-mult      :close 2}
+    {:item :exec-rot        :close 0}
+    {:item 34.44            :close 0}])
+
+
+
 (fact "plush->push with closes up parens right"
   (plush->push
     [ {:item :foo :close 0}
@@ -360,21 +427,27 @@
 
 (fact "plush->push example per Tom Helmuth"
   (plush->push
-    [ {:item :exec-do*times   :close 0}
-      {:item 8                :close 0}
-      {:item 11               :close 3}
-      {:item :integer-add     :close 0 :silent true}
-      {:item :exec-if         :close 1}
-      {:item 17               :close 0}
-      {:item :noop_open_paren :close 0}
-      {:item false            :close 0}
-      {:item :code-quote      :close 0}
-      {:item :float-mult      :close 2}
-      {:item :exec-rot        :close 0}
-      {:item 34.44            :close 0}]
+    helmuth-1
     { :exec-do*times 1
       :exec-if       2
       :code-quote    1
       :exec-rot      3}) =>
   '[:exec-do*times (8 11) :exec-if ()
     (17 (false :code-quote (:float-mult)) :exec-rot (34.44) () ())])
+
+
+(fact "plush->push for noop_delete_prev_paren_pair genes"
+  (plush->push
+    (conj helmuth-1 {:item :noop_delete_prev_paren_pair :close 0})
+    { :exec-do*times 1
+      :exec-if       2
+      :code-quote    1
+      :exec-rot      3}) =>
+  '[:exec-do*times (8 11) :exec-if ()
+    (17  false :code-quote (:float-mult)  :exec-rot (34.44) () ())])
+;;      ^ CHANGE                CHANGE  ^
+
+
+
+
+
