@@ -6,15 +6,6 @@
   (:use clojure.pprint))
 
 
-;; [+] noop_open_paren
-;; [ ] noop_delete_prev_paren_pair
-;; [+] :parentheses metadata
-;; [+] :close values
-;; [+] :close-open values
-;; [+] :close count
-;; [+] :silent metadata
-
-
 (fact "clean-insert adds a thing to a zipper without leaving the nil placeholder in an empty sub-list"
   (zip/root (zip/insert-left (zip/next (zip/seq-zip '())) 99)) =>
     '(99 nil) ;; because of the placeholder nil
