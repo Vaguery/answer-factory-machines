@@ -73,6 +73,7 @@
 
 
 (defn nondominated
+  "takes a collection of answers; removes any that are dominated by any others; if _any_ answer in the entire collection has an extra score, or lacks a score the others have (or it has a nil value), then _all_ the answers are returned"
   [answers & [rubrics]]
   (let [universe    (every-rubric answers)
         consistent? (every? #(= (set (keys (:scores %))) universe) answers)

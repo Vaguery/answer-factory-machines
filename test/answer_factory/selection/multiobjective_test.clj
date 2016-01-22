@@ -43,6 +43,7 @@
         d2 (dude-with-scores {:x 1 :y 1 :z 2 :Q 99})
         d3 (dude-with-scores {:x 1 :y 1 :z nil})]
     (dominated-by? d2 d1) => false
+    (dominated-by? d1 d2) => false
     (dominated-by? d1 d3) => false
     (dominated-by? d3 d1) => false
     ))
