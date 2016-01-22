@@ -1,19 +1,11 @@
 (ns answer-factory.selection.lexicase-test
   (:use midje.sweet)
   (:use answer-factory.answer.push)
-  (:use answer-factory.selection.core))
+  (:use answer-factory.selection.core)
+  (:use answer-factory.test.util))
 
 
 ;; some fixtures
-
-(defn set-scores
-  [answer new-fitness-map]
-  (assoc answer :scores new-fitness-map))
-
-
-(defn dude-with-scores
-  [scores]
-  (set-scores (make-pushanswer []) scores))
 
 
 (fact "lexicase-selection will return the one answer if only one was passed in"

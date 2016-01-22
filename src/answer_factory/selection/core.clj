@@ -38,3 +38,15 @@
       (shuffle rubrics))))
 
 
+;; multiobjective selection
+
+
+(defn dominates?
+  "returns true if the second (answer) argument dominates the first"
+  [a1 a2]
+  (let [k     (keys (:scores a1))
+        s1    (map (:scores a1) k)
+        s2    (map (:scores a2) k)
+        delta (mapv compare s1 s2)]
+    (and (not-any? neg? delta) (boolean (some pos? delta)))))
+
