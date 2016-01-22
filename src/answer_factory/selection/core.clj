@@ -41,12 +41,45 @@
 ;; multiobjective selection
 
 
-(defn dominates?
-  "returns true if the second (answer) argument dominates the first"
-  [a1 a2]
-  (let [k     (keys (:scores a1))
+(defn every-rubric
+  "returns a set of rubric keywords, which is the union of all the :score keys in every answer in the argument collection"
+  [answers]
+  (reduce
+    #(into %1 (keys (:scores %2)))
+    #{}
+    answers))
+
+
+(defn dominated-by?
+  "returns true if the second (answer) argument dominates the first; if a collection of rubrics is specified, that is used as the basis of comparison; otherwise, the union of the :scores keys of both answers are used; if any scores in either answer are nil, it returns false"
+  [a1 a2 & [rubrics]]
+  (let [k     (if rubrics
+                (seq rubrics)
+                (set (concat (keys (:scores a1)) (keys (:scores a2)))))
         s1    (map (:scores a1) k)
         s2    (map (:scores a2) k)
-        delta (mapv compare s1 s2)]
-    (and (not-any? neg? delta) (boolean (some pos? delta)))))
+        delta (map compare s1 s2)]
+    (and (not-any? nil? s1)
+         (not-any? nil? s2)
+         (and
+           (boolean (some pos? delta))
+           (not-any? neg? delta)))))
 
+
+(defn remove-dominated
+  "takes an answer and a collection of answers, and removes from the latter all answers dominated by the first argument; if an optional rubrics collection is passed in, that is used for the basis of comparison"
+  [answer answers & [rubrics]]
+  (remove #(dominated-by? % answer rubrics) answers))
+
+
+(defn nondominated
+  [answers & [rubrics]]
+  (let [universe    (every-rubric answers)
+        consistent? (every? #(= (set (keys (:scores %))) universe) answers)
+        covered?    (every? #(not-any? nil? (vals (:scores %))) answers)]
+    (if (and consistent? covered?)
+      (reduce
+        (fn [keep check] (remove-dominated check keep rubrics))
+        answers
+        answers)
+      answers)))
