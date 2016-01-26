@@ -3,7 +3,7 @@
   (:require [clojure.zip :as zip])
   (:require [push.core :as p])
   (:require [push.interpreter.core :as i])
-  (:use [answer-factory.genomes.bb8])
+  (:use [answer-factory.genome.bb8])
   (:use clojure.pprint)
   (:use clojure.data))
 

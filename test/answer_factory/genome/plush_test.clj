@@ -1,8 +1,8 @@
-(ns answer-factory.genomes.plush-test
+(ns answer-factory.genome.plush-test
   (:use midje.sweet)
   (:use answer-factory.genomes.plush)
   (:require [clojure.zip :as zip])
-  (:require [answer-factory.genomes.bb8 :as bb8])
+  (:require [answer-factory.genome.bb8 :as bb8])
   (:use clojure.pprint))
 
 
@@ -439,6 +439,27 @@
 ;;      ^ CHANGE                CHANGE  ^
 
 
+;;; push->plush
+
+
+(fact "an empty program produces an empty genome"
+  (push->plush [] {}) => [])
+
+
+(fact "a simple linear program produces a simple linear genome"
+  (push->plush [1 2 3] {}) =>
+    [{:item 1   :close 0}
+    {:item 2    :close 0}
+    {:item 3    :close 1}]
+  )
+
+
+(future-fact "a genome will record branches in the :open gene, as encoded in the branch-map"
+  (push->plush [1 :foo 2] {}) =>
+    [{:item 1     :open 0  :close 0}
+     {:item :foo  :open 1  :close 0}
+     {:item 3     :open 0  :close 1}]
+  )
 
 
 

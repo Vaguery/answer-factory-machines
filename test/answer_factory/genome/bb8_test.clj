@@ -1,7 +1,7 @@
-(ns answer-factory.genomes.bb8-test
+(ns answer-factory.genome.bb8-test
   (:use midje.sweet)
   (:require [clojure.zip :as zip])
-  (:use [answer-factory.genomes.bb8])
+  (:use [answer-factory.genome.bb8])
   (:use clojure.pprint))
 
 

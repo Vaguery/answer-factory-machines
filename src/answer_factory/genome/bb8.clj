@@ -1,4 +1,4 @@
-(ns answer-factory.genomes.bb8
+(ns answer-factory.genome.bb8
   (:require [clojure.zip :as zip]))
 
 

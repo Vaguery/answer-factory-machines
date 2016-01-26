@@ -85,3 +85,7 @@
         answers
         answers)
       answers)))
+
+
+;; filtering a single VECTOR rubric
+

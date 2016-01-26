@@ -1,6 +1,6 @@
-(ns answer-factory.genomes.plush
+(ns answer-factory.genome.plush
   (:require [clojure.zip :as zip])
-  (:require [answer-factory.genomes.bb8 :as bb8]))
+  (:require [answer-factory.genome.bb8 :as bb8]))
 
 
 (defn clean-insert
@@ -173,3 +173,17 @@
 
 
 
+(defn push->plush
+  "takes a Push program and transforms it into the simplest possible Plush genome: :close genes are only used for the minimal necessary parenthesis-closing, there are no :silent genes, and so forth. Non-instruction based coe blocks are initiated with :noop_open_paren"
+  [program branch-map]
+  (loop [loc    (zip/next (zip/seq-zip (seq program)))
+         genome []]
+    (if (zip/end? loc)
+      genome
+      (recur    (zip/next loc)
+                (if (zip/branch? loc)
+                  (conj genome {:item :noop_open_paren :close 0})
+                  (if (= (zip/rightmost loc) loc)
+                    (conj genome {:item (zip/node loc) :close 1})
+                    (conj genome {:item (zip/node loc) :close 0})
+                  ))))))
