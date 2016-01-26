@@ -1,6 +1,6 @@
 (ns answer-factory.genome.plush-test
   (:use midje.sweet)
-  (:use answer-factory.genomes.plush)
+  (:use answer-factory.genome.plush)
   (:require [clojure.zip :as zip])
   (:require [answer-factory.genome.bb8 :as bb8])
   (:use clojure.pprint))

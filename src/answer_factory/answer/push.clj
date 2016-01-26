@@ -7,7 +7,7 @@
 (defn make-pushanswer
   "Builds a PushAnswer record from a given genome; creates a random uuid (using v1, from which a timestamp of creation can be derived if needed), and leaves the scores empty."
   [g]
-  (->PushAnswer (uuid/v4) g {}))
+  (->PushAnswer (uuid/v1) g {}))
 
 
 (defn get-score
