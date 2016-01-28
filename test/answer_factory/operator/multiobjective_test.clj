@@ -1,7 +1,7 @@
-(ns answer-factory.selection.multiobjective-test
+(ns answer-factory.operator.multiobjective-test
   (:use midje.sweet)
   (:use answer-factory.answer.push)
-  (:use answer-factory.selection.core)
+  (:use answer-factory.operator.select)
   (:use answer-factory.test.util))
 
 

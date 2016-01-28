@@ -1,7 +1,7 @@
-(ns answer-factory.selection.uniform-test
+(ns answer-factory.operator.uniform-test
   (:use midje.sweet)
   (:use answer-factory.answer.push)
-  (:use answer-factory.selection.core))
+  (:use answer-factory.operator.select))
 
 
 ;; some fixtures

@@ -1,7 +1,7 @@
-(ns answer-factory.selection.lexicase-test
+(ns answer-factory.operator.lexicase-test
   (:use midje.sweet)
   (:use answer-factory.answer.push)
-  (:use answer-factory.selection.core)
+  (:use answer-factory.operator.select)
   (:use answer-factory.test.util))
 
 

@@ -1,4 +1,4 @@
-(ns answer-factory.selection.core
+(ns answer-factory.operator.select
   (:require [answer-factory.answer.push :as answer]))
 
 
