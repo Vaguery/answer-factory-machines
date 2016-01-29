@@ -42,3 +42,9 @@
   (mutate-plush-close {:item 22 :close 1} 1.0 0.0 55) => {:item 22 :close 0})
 
 
+;; mutate-plush-silence
+
+(fact "mutate-plush-silence sets or resets the :silent field"
+  (mutate-plush-silence {:item 22 :close 0} 1.0) => {:item 22 :close 0 :silent true}
+    (provided (rand-nth [true false]) => true)
+  (mutate-plush-silence {:item 22 :close 1} 0.0) => {:item 22 :close 1})

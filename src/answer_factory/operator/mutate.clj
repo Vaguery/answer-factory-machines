@@ -30,3 +30,12 @@
       (assoc gene :close new-close))
     gene))
 
+
+(defn mutate-plush-silence
+  "takes a Plush gene map, a probability of resampling (mutation); returns the Plush gene with the :silent gene (re)set to true with the given probability"
+  [gene prob]
+  (if (< (rand) prob)
+    (let [new-silence (rand-nth [true false])]
+      (assoc gene :silent new-silence))
+    gene))
+
