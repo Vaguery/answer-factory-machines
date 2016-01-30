@@ -11,6 +11,7 @@
 
 
 (defn discrete-sample
+  "Takes two collections: one of items being sampled, and one (of equal size) of non-negative numbers which are the 'weights' of each item in the first set; each item is sampled with a probability proportional to its relative weight. Throws exceptions if the two collections are of different sizes, or any weight is negative."
   [items weights]
   (cond
     (not= (count items) (count weights))
