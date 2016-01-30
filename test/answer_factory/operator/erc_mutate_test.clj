@@ -4,35 +4,19 @@
   (:use answer-factory.operator.mutate))
 
 
-(fact "mutate-plush-item changes the :item field"
-  (mutate-plush-item {:item 22 :close 0} 1.0 [99]) => {:item 99 :close 0}
-  (mutate-plush-item {:item 22 :close 0} 1.0 [false]) => {:item false :close 0}
-  (mutate-plush-item {:item 22 :close 0} 0.0 [false]) => {:item 22 :close 0})
+(fact "mutate-gene-item changes the :item field"
+  (mutate-gene-item {:item 22 :close 0} 1.0 [99]) => {:item 99 :close 0}
+  (mutate-gene-item {:item 22 :close 0} 1.0 [false]) => {:item false :close 0}
+  (mutate-gene-item {:item 22 :close 0} 0.0 [false]) => {:item 22 :close 0})
 
 
-(fact "mutate-plush-item does nothing if the list is empty"
-  (mutate-plush-item {:item 22 :close 0} 1.0 []) => {:item 22 :close 0})
+(fact "mutate-gene-item does nothing if the list is empty"
+  (mutate-gene-item {:item 22 :close 0} 1.0 []) => {:item 22 :close 0})
 
 
-(fact "mutate-plush-item actually samples the list"
-  (mutate-plush-item {:item 22 :close 0} 1.0 [1 2 3]) => {:item 8888 :close 0}
+(fact "mutate-gene-item actually samples the list"
+  (mutate-gene-item {:item 22 :close 0} 1.0 [1 2 3]) => {:item 8888 :close 0}
     (provided (rand-nth [1 2 3]) => 8888))
-
-
-;; binomial-sample
-
-(fact "binomial-sample has a default cutoff"
-  (binomial-sample 0) => 0
-  (binomial-sample 1) => 21
-  (binomial-sample 0.8) => integer?
-  (binomial-sample 0.8) => #(< % 22))
-
-
-(fact "binomial-sample has an optionally settable cutoff"
-  (binomial-sample 0 :limit 999) => 0
-  (binomial-sample 1 :limit 999) => 1000
-  (binomial-sample 0.8 :limit 999) => integer?
-  (< (binomial-sample 0.999 :limit 666) 668) => true)
 
 
 ;; mutate-plush-close
@@ -45,6 +29,8 @@
 ;; mutate-plush-silence
 
 (fact "mutate-plush-silence sets or resets the :silent field"
-  (mutate-plush-silence {:item 22 :close 0} 1.0) => {:item 22 :close 0 :silent true}
-    (provided (rand-nth [true false]) => true)
-  (mutate-plush-silence {:item 22 :close 1} 0.0) => {:item 22 :close 1})
+  (mutate-plush-silence {:item 22 :close 0} 1.0 1.0) => {:item 22 :close 0 :silent true}
+  (mutate-plush-silence {:item 22 :close 0} 1.0 0.0) => {:item 22 :close 0 :silent false}
+  (mutate-plush-silence {:item 22 :close 0} 1.0 0.4) => {:item 22 :close 0 :silent false}
+    (provided (rand) => 0.7)
+  (mutate-plush-silence {:item 22 :close 1} 0.0 0.0) => {:item 22 :close 1})

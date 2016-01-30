@@ -1,4 +1,4 @@
-(ns answer-factory.test.util
+(ns answer-factory.util.test
   (:use answer-factory.answer.push))
 
 (defn set-scores

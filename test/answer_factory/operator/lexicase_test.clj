@@ -2,7 +2,7 @@
   (:use midje.sweet)
   (:use answer-factory.answer.push)
   (:use answer-factory.operator.select)
-  (:use answer-factory.test.util))
+  (:use answer-factory.util.test))
 
 
 ;; some fixtures
