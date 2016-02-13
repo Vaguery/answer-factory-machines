@@ -30,13 +30,13 @@
   (p/known-instructions (p/interpreter)) => (contains :integer-subtract))
 
 
-(defn random-input
+(defn random-binding
   [interpreter]
-  (p/input-names interpreter))
+  (p/binding-names interpreter))
 
 
 (fact
-  (p/input-names (p/interpreter :inputs {:a 8 :b 9})) => [:a :b] )
+  (p/binding-names (p/interpreter :bindings {:a 8 :b 9})) => [:a :b] )
 
 
 (defn random-literal
@@ -56,7 +56,7 @@
     (if (< (rand) 0.01)
       (random-literal)
       (rand-nth (concat (p/known-instructions interpreter)
-                        (p/input-names interpreter))))))
+                        (p/binding-names interpreter))))))
 
 
 (defn any-move
