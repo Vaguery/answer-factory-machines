@@ -76,8 +76,8 @@
   (into [] (repeatedly size #(random-gene interpreter prob))))
 
 
-(def x (random-genome (p/interpreter :inputs {:a 8 :b 11}) 0.1 10 ))
-(def y (random-genome (p/interpreter :inputs {:a 8 :b 11}) 0.1 10 ))
+(def x (random-genome (p/interpreter :bindings {:a 8 :b 11}) 0.1 10 ))
+(def y (random-genome (p/interpreter :bindings {:a 8 :b 11}) 0.1 20 ))
 
 
 (defn point-crossover
@@ -90,7 +90,10 @@
 
 (fact "point-crossover does a thing"
   (first (point-crossover x y)) => (first x)
-  (last (point-crossover x y)) => (last y))
+  (last (point-crossover x y)) => (last y)
+  (> (+ (count x) (count y))
+    (count (point-crossover x y))) => true
+  )
 
 
 (defn uniform-crossover
@@ -108,7 +111,6 @@
 
 
 
-
 (defn item-mutate
   [genome interpreter prob]
   (assoc-in
@@ -118,7 +120,7 @@
 
 
 (fact "mutation does a thing"
-  (map :item (item-mutate x (p/interpreter :inputs {:a 8 :b 9}) 0.1)) =not=>
+  (map :item (item-mutate x (p/interpreter :bindings {:a 8 :b 9}) 0.1)) =not=>
     (map :item x))
 
 
@@ -131,12 +133,12 @@
 
 
 (fact "mutation does a thing"
-  (bb8->push (gene-mutate x (p/interpreter :inputs {:a 8 :b 9}) 0.1)) =not=> 
+  (bb8->push (gene-mutate x (p/interpreter :bindings {:a 8 :b 9}) 0.1)) =not=> 
   (bb8->push x))
 
 
 
-(def x-runner (p/interpreter :inputs {:a 8 :b 9}))
+(def x-runner (p/interpreter :bindings {:a 8 :b 9}))
 
 
 (defn run-over-input-range
@@ -146,7 +148,9 @@
                 (p/run 
                   x-runner
                   (bb8->push genome)
-                  300 :inputs {:a % :b (* % -8.7)})
-                :boolean) (range -10 10))))
+                  300 :bindings {:a % :b (* % -8.7)})
+                :float) (range -10 10))))
 
+
+(println (run-over-input-range y))
 
