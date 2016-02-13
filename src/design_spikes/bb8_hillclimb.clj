@@ -150,24 +150,3 @@
                 :boolean) (range -10 10))))
 
 
-; (loop [collection {}
-;        g (random-genome x-runner 0.2 20)
-;        feature-vec (run-over-input-range g)
-;        counter 0]
-;   (if (> (count collection) 50)
-;     (do
-;       (println (sort-by first (for [[k v] collection] [(count v) (into [] k)])))
-;       collection)
-;     (do
-;       (println (str counter " " (count collection)))
-;       (recur  (assoc
-;               collection
-;               feature-vec
-;               (conj (get collection feature-vec #{}) g))
-;             (gene-mutate g x-runner 0.2) ;; g
-;             (run-over-input-range g) ;; feature-vec
-;             (inc counter)
-;        ))))
-
-
-
