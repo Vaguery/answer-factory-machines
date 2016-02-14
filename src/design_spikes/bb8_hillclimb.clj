@@ -5,9 +5,12 @@
   (:require [push.interpreter.core :as i])
   (:use [answer-factory.genome.bb8])
   (:use clojure.pprint)
+  (:require [clojure.edn :as edn])
   (:require [ragtime.jdbc :as jdbc])
   (:require [ragtime.repl :as repl])
-  (:require [clojure.string :as str]))
+  (:require [clojure.java.jdbc :as j])
+  (:require [clj-time.local :as t])
+  )
 
 
 ;; fixtures
@@ -19,21 +22,6 @@
 
 
 (def all-puts [:L :R])
-
-
-;; some db stuff
-
-
-(def db-migrate-config
-  {:datastore 
-    (jdbc/sql-database 
-      {:connection-uri "jdbc:sqlite:resources/db/test.db"})
-   :migrations 
-    (jdbc/load-resources "migrations")})
-
-(repl/rollback db-migrate-config 5)
-
-(repl/migrate db-migrate-config)
 
 
 ;; some random code generators
@@ -93,8 +81,8 @@
   (into [] (repeatedly size #(random-gene interpreter prob))))
 
 
-(def x (random-genome (p/interpreter :bindings {:a 8 :b 11}) 0.1 10 ))
-(def y (random-genome (p/interpreter :bindings {:a 8 :b 11}) 0.1 20 ))
+(def dude-x (random-genome (p/interpreter :bindings {:a 8 :b 11}) 0.1 10 ))
+(def dude-y (random-genome (p/interpreter :bindings {:a 8 :b 11}) 0.1 20 ))
 
 
 (defn point-crossover
@@ -106,10 +94,10 @@
 
 
 (fact "point-crossover does a thing"
-  (first (point-crossover x y)) => (first x)
-  (last (point-crossover x y)) => (last y)
-  (> (+ (count x) (count y))
-    (count (point-crossover x y))) => true
+  (first (point-crossover dude-x dude-y)) => (first dude-x)
+  (last (point-crossover dude-x dude-y)) => (last dude-y)
+  (> (+ (count dude-x) (count dude-y))
+    (count (point-crossover dude-x dude-y))) => true
   )
 
 
@@ -123,8 +111,8 @@
 
 
 (fact "uniform-crossover does a thing"
-  (count (uniform-crossover x y)) => (count x)
-  (concat x y) => (contains (uniform-crossover x y) :gaps-ok :in-any-order))
+  (count (uniform-crossover dude-x dude-y)) => (count dude-x)
+  (concat dude-x dude-y) => (contains (uniform-crossover dude-x dude-y) :gaps-ok :in-any-order))
 
 
 
@@ -137,8 +125,8 @@
 
 
 (fact "mutation does a thing"
-  (map :item (item-mutate x (p/interpreter :bindings {:a 8 :b 9}) 0.1)) =not=>
-    (map :item x))
+  (map :item (item-mutate dude-x (p/interpreter :bindings {:a 8 :b 9}) 0.1)) =not=>
+    (map :item dude-x))
 
 
 (defn gene-mutate
@@ -150,8 +138,8 @@
 
 
 (fact "mutation does a thing"
-  (bb8->push (gene-mutate x (p/interpreter :bindings {:a 8 :b 9}) 0.1)) =not=> 
-  (bb8->push x))
+  (bb8->push (gene-mutate dude-x (p/interpreter :bindings {:a 8 :b 9}) 0.1)) =not=> 
+  (bb8->push dude-x))
 
 
 
@@ -166,7 +154,54 @@
                   x-runner
                   (bb8->push genome)
                   300 :bindings {:a % :b (* % -8.7)})
-                :float) (range -10 10))))
+                :integer) (range -10 10))))
 
 
+(println (run-over-input-range dude-x))
+
+
+;;
+;; some db stuff
+;;
+
+(def db-migrate-config
+  {:datastore 
+    (jdbc/sql-database 
+      {:connection-uri "jdbc:sqlite:resources/db/test.db"})
+   :migrations 
+    (jdbc/load-resources "migrations")})
+
+
+(repl/rollback db-migrate-config 5) ;; kill everything
+(repl/migrate db-migrate-config)    ;; start afresh
+
+
+;;
+;; jdbc
+;;
+
+(def population-db { :subprotocol "sqlite"
+                     :subname "resources/db/test.db"})
+
+
+(defn genome->sql
+  [genome]
+  {:genome (pr-str genome)
+   :program (pr-str (bb8->push genome))
+   :timestamp (pr-str (t/local-now))})
+
+
+
+(j/insert! population-db :answers
+  (genome->sql dude-x)
+  (genome->sql dude-y))
+
+
+(println
+  (j/query population-db
+    ["select * from answers LIMIT 1"]))
+
+
+(defn f [thing] (+ thing 88))
+(println (clojure.repl/source f))
 

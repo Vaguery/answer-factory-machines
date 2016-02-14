@@ -1,8 +1,8 @@
 {:up ["CREATE TABLE scores (
-        answer    INTEGER         NOT NULL,
-        rubric    INTEGER         NOT NULL,
-        score     REAL,
-        FOREIGN KEY (answer) REFERENCES answers(id),
-        FOREIGN KEY (rubric) REFERENCES rubrics(id),
-        PRIMARY KEY(answer, rubric) );"]
+        answers_id   INTEGER         NOT NULL,
+        rubrics_id   INTEGER         NOT NULL,
+        score        REAL,
+        FOREIGN KEY (answers_id) REFERENCES answers(id),
+        FOREIGN KEY (rubrics_id) REFERENCES rubrics(id),
+        PRIMARY KEY(answers_id, rubrics_id) );"]
  :down ["DROP TABLE scores;"]}
