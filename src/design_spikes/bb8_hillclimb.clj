@@ -5,7 +5,9 @@
   (:require [push.interpreter.core :as i])
   (:use [answer-factory.genome.bb8])
   (:use clojure.pprint)
-  (:use clojure.data))
+  (:require [ragtime.jdbc :as jdbc])
+  (:require [ragtime.repl :as repl])
+  (:require [clojure.string :as str]))
 
 
 ;; fixtures
@@ -17,6 +19,21 @@
 
 
 (def all-puts [:L :R])
+
+
+;; some db stuff
+
+
+(def db-migrate-config
+  {:datastore 
+    (jdbc/sql-database 
+      {:connection-uri "jdbc:sqlite:resources/db/test.db"})
+   :migrations 
+    (jdbc/load-resources "migrations")})
+
+(repl/rollback db-migrate-config 5)
+
+(repl/migrate db-migrate-config)
 
 
 ;; some random code generators
@@ -152,5 +169,4 @@
                 :float) (range -10 10))))
 
 
-(println (run-over-input-range y))
 

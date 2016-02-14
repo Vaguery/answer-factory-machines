@@ -1,0 +1,7 @@
+{:up ["CREATE TABLE lineage (
+        answer    INTEGER PRIMARY KEY        NOT NULL,
+        ancestor  INTEGER                    NOT NULL,
+        relation  TEXT                       NOT NULL,
+        FOREIGN KEY (answer)   REFERENCES answers(id),
+        FOREIGN KEY (ancestor) REFERENCES answers(id));"]
+ :down ["DROP TABLE lineage;"]}
