@@ -191,15 +191,20 @@
    :timestamp (pr-str (t/local-now))})
 
 
+(def random-pop
+  (repeatedly 100
+    (fn [] (genome->sql
+      (random-genome (p/interpreter :bindings {:a 1 :b 11}) 0.1 10)))))
 
-(j/insert! population-db :answers
-  (genome->sql dude-x)
-  (genome->sql dude-y))
+
+; (println random-pop)
+
+(apply (partial j/insert! population-db :answers :transaction? true) random-pop)
 
 
 (println
   (j/query population-db
-    ["select * from answers LIMIT 1"]))
+    ["select id from answers"]))
 
 
 (defn f [thing] (+ thing 88))
