@@ -1,4 +1,4 @@
-(ns design-spikes.bb8-hillclimb
+(ns design-spikes.bb8-simple
   (:use midje.sweet)
   (:require [clojure.zip :as zip])
   (:require [push.core :as p])
@@ -31,7 +31,7 @@
   (p/known-instructions interpreter))
 
 
-(fact
+(fact :spike
   (p/known-instructions (p/interpreter)) => (contains :integer-subtract))
 
 
@@ -40,7 +40,7 @@
   (p/binding-names interpreter))
 
 
-(fact
+(fact :spike
   (p/binding-names (p/interpreter :bindings {:a 8 :b 9})) => [:a :b] )
 
 
@@ -93,7 +93,7 @@
       (drop (min (rand-int (count dad)) (dec (count dad))) dad))))
 
 
-(fact "point-crossover does a thing"
+(fact "point-crossover does a thing" :spike
   (first (point-crossover dude-x dude-y)) => (first dude-x)
   (last (point-crossover dude-x dude-y)) => (last dude-y)
   (> (+ (count dude-x) (count dude-y))
@@ -110,7 +110,7 @@
     (range 0 (count mom))))
 
 
-(fact "uniform-crossover does a thing"
+(fact "uniform-crossover does a thing" :spike
   (count (uniform-crossover dude-x dude-y)) => (count dude-x)
   (concat dude-x dude-y) => (contains (uniform-crossover dude-x dude-y) :gaps-ok :in-any-order))
 
@@ -124,7 +124,7 @@
     (random-item interpreter prob)))
 
 
-(fact "mutation does a thing"
+(fact "mutation does a thing" :spike
   (map :item (item-mutate dude-x (p/interpreter :bindings {:a 8 :b 9}) 0.1)) =not=>
     (map :item dude-x))
 
@@ -137,7 +137,7 @@
     (random-gene interpreter prob)))
 
 
-(fact "mutation does a thing"
+(fact "mutation does a thing" :spike
   (bb8->push (gene-mutate dude-x (p/interpreter :bindings {:a 8 :b 9}) 0.1)) =not=> 
   (bb8->push dude-x))
 
@@ -157,8 +157,6 @@
                 :integer) (range -10 10))))
 
 
-(println (run-over-input-range dude-x))
-
 
 ;;
 ;; some db stuff
@@ -172,8 +170,7 @@
     (jdbc/load-resources "migrations")})
 
 
-(repl/rollback db-migrate-config 5) ;; kill everything
-(repl/migrate db-migrate-config)    ;; start afresh
+
 
 
 ;;
@@ -182,6 +179,14 @@
 
 (def population-db { :subprotocol "sqlite"
                      :subname "resources/db/test.db"})
+
+
+(fact "I can roll back all the migrations, and then re-run them" :spike
+  (repl/rollback db-migrate-config 5) ;; kill everything
+  (repl/migrate db-migrate-config)    ;; start afresh
+  (fact "there is an empty table now"
+    (let [r (j/query population-db ["SELECT count(id) from answers"])]
+      (first r) => {(keyword "count(id)") 0})))
 
 
 (defn genome->sql
@@ -197,16 +202,12 @@
       (random-genome (p/interpreter :bindings {:a 1 :b 11}) 0.1 10)))))
 
 
-; (println random-pop)
-
-(apply (partial j/insert! population-db :answers :transaction? true) random-pop)
-
-
-(println
-  (j/query population-db
-    ["select id from answers"]))
+(fact "I can write answers" :spike
+  (apply (partial j/insert! population-db :answers) random-pop)
+  (fact "there are answers in the table now"
+    (let [r (j/query population-db ["SELECT count(id) from answers"])]
+      (first r) => {(keyword "count(id)") 100})))
 
 
-(defn f [thing] (+ thing 88))
-(println (clojure.repl/source f))
+;; rubrics
 
