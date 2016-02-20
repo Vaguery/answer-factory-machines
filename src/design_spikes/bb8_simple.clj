@@ -159,17 +159,24 @@
 
 
 ;;
-;; some db stuff
+;; some db setup stuff
 ;;
 
+(defn silent-reporter
+  "For ragtime use; prints nothing to STDOUT"
+  [& stuff]
+  ;; do nothing
+  )
+
+
 (def db-migrate-config
-  {:datastore 
-    (jdbc/sql-database 
-      {:connection-uri "jdbc:sqlite:resources/db/test.db"})
-   :migrations 
-    (jdbc/load-resources "migrations")})
-
-
+  { :datastore 
+      (jdbc/sql-database 
+        {:connection-uri "jdbc:sqlite:resources/db/test.db"})
+    :migrations 
+      (jdbc/load-resources "migrations")
+    ; :reporter silent-reporter
+    })
 
 
 
