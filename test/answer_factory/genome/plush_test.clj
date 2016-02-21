@@ -479,12 +479,12 @@
   )
 
 
-; (future-fact "a genome will record branches in the :open gene, as encoded in the branch-map"
-;   (push->plush [1 :foo 2] {}) =>
-;     [{:item 1     :open 0  :close 0}
-;      {:item :foo  :open 1  :close 0}
-;      {:item 3     :open 0  :close 1}]
-;   )
+(future-fact "a genome will record branches in the :open gene, as encoded in the branch-map"
+  (push->plush [1 :foo 2] {}) =>
+    [{:item 1     :open 0  :close 0}
+     {:item :foo  :open 1  :close 0}
+     {:item 3     :open 0  :close 1}]
+  )
 
 
 

@@ -111,7 +111,6 @@
   (L1-distance-from-top-result {:y :foo} {:x '(:foo)} :missing) => :missing
   )
 
-
 ;; 
 ;; score an Answer using a single ErrorRubric:
 ;;   1. extract TestCase and answer
@@ -121,19 +120,44 @@
 ;;
 
 
-; (fact "score-answer"
-;   (let [tc (test-case :inputs {:x 8}
-;                       :expected {:integer 7} 
-;                       :config {:step-limit 100})
-;         r  (error-rubric tc L1-distance-from-top-result)
-;         a1 (a/make-pushanswer [] :bb8)]
-;     (score-answer )
-;         ))
+;; fixtures
+
+    ; (integer? m)   (jump-to z m)
+    ; (= m :head)    (rewind z)
+    ; (= m :tail)    (fast-forward z)
+    ; (= m :subhead) (goto-leftmost z)
+    ; (= m :append)  (goto-rightmost z)
+    ; (= m :left)    (wrap-left z)
+    ; (= m :right)   (wrap-right z)
+    ; (= m :prev)    (wrap-prev z)
+    ; (= m :next)    (wrap-next z)
+    ; (= m :up)      (step-up z)
+    ; (= m :down)    (step-down z)
+
+(def a1 (a/make-pushanswer [{:from :left :put :R :item 1}
+                            {:from :up   :put :L :item :x}
+                            {:from :left :put :R :item 2}
+                            {:from :prev :put :L :item :integer-add}
+                            {:from :tail :put :R :item 4}
+                            {:from 81    :put :R :item :integer-subtract}
+                            {:from :head :put :R :item :integer-dup}] :bb8))
 
 
-;; make ErrorRubric headless!
+(def a2 (a/make-pushanswer [{:from :left :put :R :item false}] :bb8))
 
-;; 
+
+(fact "score-answer returns an answer's score"
+  (let [tc (test-case :inputs {:x 8}
+                      :expected {:integer 7} 
+                      :config {:step-limit 100})
+        r  (error-rubric :testcase tc :score-fn L1-distance-from-top-result)]
+    
+    (:program a1) => [:x :integer-dup 2 :integer-subtract :integer-add 1 4]
+
+    (score-answer a1 r :missing) => 3.0
+    (score-answer a2 r :missing) => :missing))
+
+
 ;; score an Answer using a single StructuralRubric:
 ;;   1. extract TestCase and answer
 ;;   2. exercise-test-case

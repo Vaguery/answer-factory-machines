@@ -94,7 +94,7 @@
     (if (nil? guess)
       missing-value
       (if (number? guess)
-        (double (math/abs (- target guess)))
+        (double (math/abs (-' target guess)))
         (if (= target guess) 0.0 1.0)
         ))))
 
@@ -109,13 +109,13 @@
 
 
 (defn score-answer
-  [answer rubric]
+  [answer rubric missing-value]
   (let [p      (:program answer)
         tc     (:testcase rubric)
-        score! (:score-fn rubric)]
-    ( ( score!
-        (exercise-test-case tc p)
-        (:expected tc)
-        100000000.0) )
+        scorer (:score-fn rubric)]
+    (scorer
+      (:expected tc)
+      (exercise-test-case tc p)
+      missing-value)
     ))
 
