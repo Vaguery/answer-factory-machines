@@ -42,6 +42,9 @@
   (let [t1 (test-case :inputs {:x 8} :expected {:y 7})]
     (exercise-test-case t1 [:x 12 :push-quoterefs :y :integer-add :integer-save]) => {:y '(20)}
     (exercise-test-case t1 [:x -2 :push-quoterefs :y :integer-add :integer-save]) => {:y '(6)}
+    (exercise-test-case t1 [:x -2.1 :push-quoterefs :y :integer-add :integer-save]) => {:y '(8)}
+    (exercise-test-case t1 [-2.1 :push-quoterefs :y :integer-add :integer-save]) => {:y '()}
+    (exercise-test-case t1 [-2.1 :push-quoterefs :y :float-save :x]) => {:y '(-2.1)}
     ))
 
 
