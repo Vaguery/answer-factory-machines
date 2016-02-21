@@ -76,7 +76,7 @@
   [t program]
   (-> (assoc (:context t) :program program)
       i/reset-interpreter
-      (push/run , program 1000)
+      (push/run , program (i/step-limit (:context t)))
       (extract-results , (keys (:expected t)))))
 
 

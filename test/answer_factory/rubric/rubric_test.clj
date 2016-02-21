@@ -61,7 +61,9 @@
 
 
 (fact "exercise-test-case works for output bindings"
-  (let [t1 (test-case :inputs {:x 8} :expected {:y 7})]
+  (let [t1 (test-case :inputs {:x 8} 
+                      :expected {:y 7} 
+                      :config {:step-limit 1000})]
     (exercise-test-case t1 [:x 12 :push-quoterefs :y :integer-add :integer-save]) => {:y '(20)}
     (exercise-test-case t1 [:x -2 :push-quoterefs :y :integer-add :integer-save]) => {:y '(6)}
     (exercise-test-case t1 [:x -2.1 :push-quoterefs :y :integer-add :integer-save]) => {:y '(8)}
@@ -71,23 +73,57 @@
 
 
 (fact "exercise-test-case works for stack names"
-  (let [t1 (test-case :inputs {:x 8} :expected {:integer 7})]
+  (let [t1 (test-case :inputs {:x 8}
+                      :expected {:integer 7} 
+                      :config {:step-limit 100})]
     (exercise-test-case t1 [:x 12 :integer-add]) => {:integer '(20)}
     (exercise-test-case t1 [:x 12 :integer-add :integer-dup]) => {:integer '(20 20)}
     ))
 
 
 (fact "exercise-test-case works for mixed keywords"
-  (let [t1 (test-case :inputs {:x 8} :expected {:integer 7 :v 88.2})]
+  (let [t1 (test-case :inputs {:x 8} 
+                      :expected {:integer 7 :v 88.2} 
+                      :config {:step-limit 1000})]
     (exercise-test-case t1
       [3.3 :x 12 :integer-add :integer-dup :push-quoterefs 7.1 :exec-y '(:v :float-save)]) =>
         {:integer '(20 20), :v '(3.3 7.1)}
     ))
 
 
-(fact "I can create an ErrorRubric from a TestCase"
-  (keys (error-rubric (test-case) (fn [inp] (:steps inp)))) => [:id :testcase :score-fn]
-  )
+;; 
+;; score an Answer using a single ErrorRubric:
+;;   1. extract TestCase and answer
+;;   2. exercise-test-case
+;;   3. gather results (headless)
+;;   4. apply error measure => score (error measure may be soft or harsh)
+;;
 
 
-(fact "I can apply an ErrorRubric to a program")
+;; make ErrorRubric headless!
+
+;; 
+;; score an Answer using a single StructuralRubric:
+;;   1. extract TestCase and answer
+;;   2. exercise-test-case
+;;   3. gather results (headless)
+;;   4. apply error measure => score (error measure may be soft or harsh)
+;;
+
+
+;; 
+;; score an Answer using a single BehaviorRubric:
+;;   1. extract TestCase and answer
+;;   2. exercise-test-case
+;;   3. gather results (each an entire history)
+;;   4. apply error measure => score (error measure may be soft or harsh)
+;;
+
+
+;; 
+;; score an Answer using a single InteractiveRubric:
+;;   1. extract TestCase and two or more Answers
+;;   2. exercise-test-case
+;;   3. gather results
+;;   4. apply error measure => scores (error measure may be soft or harsh), for all Answers
+;;
