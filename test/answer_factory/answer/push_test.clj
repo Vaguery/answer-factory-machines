@@ -30,5 +30,6 @@
 
 (fact "make-pushanswer knows about plush genomes"
   (:program (make-pushanswer [] :plush)) => []
-  ; (:program (make-pushanswer [] :bb8)) => [(6) (4) 5 1]
+  (:program (make-pushanswer [{:item :code-quote :close 0}{:item 1 :close 8}] :plush)) => 
+    '[:code-quote (1)]
   )
