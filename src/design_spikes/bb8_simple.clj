@@ -10,6 +10,8 @@
   (:require [ragtime.repl :as repl])
   (:require [clojure.java.jdbc :as j])
   (:require [clj-time.local :as t])
+  (:require [clojure.math.numeric-tower :as math])
+  (:require [answer-factory.rubric.push :as rubric])
   )
 
 
@@ -22,6 +24,9 @@
 
 
 (def all-puts [:L :R])
+
+
+(def my-interpreter (p/interpreter :bindings {:a 8 :b 9}))
 
 
 ;; some random code generators
@@ -218,3 +223,31 @@
 
 ;; rubrics
 
+;; let's do y=a+6
+
+
+(defn simple-training-set
+  [interpreter io-pairs]
+  (for [[setup expected] io-pairs]
+    {:interpreter (i/bind-inputs interpreter setup)
+     :inputs setup
+     :outputs expected
+     :results-fn (fn [interpreter]
+        {:y (first (p/get-stack interpreter :integer))})
+     }))
+
+
+
+
+(println (map #((:results-fn %) my-interpreter) (simple-training-set 
+              my-interpreter
+              [[{:a 8} {:y 14}]
+                [{:a 19} {:y 25}]
+                [{:a -3} {:y 3}]])))
+
+;; saved for later:
+; SELECT *
+; FROM t
+; WHERE num = (SELECT MIN(num)
+;              FROM t AS t2
+;              WHERE t2.text = t.text);

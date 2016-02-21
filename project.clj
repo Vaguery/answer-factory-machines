@@ -6,6 +6,7 @@
                  [org.clojure/java.jdbc "0.4.2"]
                  [org.xerial/sqlite-jdbc "3.8.11.2"]
                  [clj-time "0.11.0"]
-                 [ragtime "0.5.2"]]
+                 [ragtime "0.5.2"]
+                 [org.clojure/math.numeric-tower "0.0.4"]]
   :profiles {:dev {:dependencies [[midje "1.8.2"]]}})
   
