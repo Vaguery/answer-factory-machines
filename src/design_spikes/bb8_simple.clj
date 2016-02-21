@@ -239,11 +239,11 @@
 
 
 
-(println (map #((:results-fn %) my-interpreter) (simple-training-set 
-              my-interpreter
-              [[{:a 8} {:y 14}]
-                [{:a 19} {:y 25}]
-                [{:a -3} {:y 3}]])))
+; (println (map #((:results-fn %) my-interpreter) (simple-training-set 
+;               my-interpreter
+;               [[{:a 8} {:y 14}]
+;                 [{:a 19} {:y 25}]
+;                 [{:a -3} {:y 3}]])))
 
 ;; saved for later:
 ; SELECT *
