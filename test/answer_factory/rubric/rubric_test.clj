@@ -91,6 +91,25 @@
     ))
 
 
+(fact "L1-distance-from-top-result"
+  (L1-distance-from-top-result {:y 8} {:y '(1 7 121)} :missing) => 7.0
+  (L1-distance-from-top-result {:y 8} {:y '(13 7 121)} :missing) => 5.0
+  (L1-distance-from-top-result {:y 8} {:y '(8 7 121)} :missing) => 0.0
+  (L1-distance-from-top-result {:y 8} {:y '()} :missing) => :missing
+  (L1-distance-from-top-result {:y 8} {:x '(2)} :missing) => :missing
+  
+  (L1-distance-from-top-result {:y false} {:y '(false)} :missing) => 0.0
+  (L1-distance-from-top-result {:y false} {:y '(true)} :missing) => 1.0
+  (L1-distance-from-top-result {:y false} {:y '()} :missing) => :missing
+  (L1-distance-from-top-result {:y false} {:x '(3)} :missing) => :missing
+  
+  (L1-distance-from-top-result {:y :foo} {:y '(:foo)} :missing) => 0.0
+  (L1-distance-from-top-result {:y :foo} {:y '(:bar)} :missing) => 1.0
+  (L1-distance-from-top-result {:y :foo} {:y '()} :missing) => :missing
+  (L1-distance-from-top-result {:y :foo} {:x '(:foo)} :missing) => :missing
+  )
+
+
 ;; 
 ;; score an Answer using a single ErrorRubric:
 ;;   1. extract TestCase and answer
@@ -98,6 +117,9 @@
 ;;   3. gather results (headless)
 ;;   4. apply error measure => score (error measure may be soft or harsh)
 ;;
+
+
+
 
 
 ;; make ErrorRubric headless!

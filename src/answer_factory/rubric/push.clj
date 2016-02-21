@@ -5,6 +5,7 @@
   (:require [clj-uuid :as uuid])
   (:require [push.interpreter.core :as i])
   (:require [clojure.set :as s])
+  (:require [clojure.math.numeric-tower :as math])
   (:use answer-factory.answer.push)
   )
 
@@ -84,12 +85,27 @@
 (defrecord ErrorRubric [id testcase score-fn])
 
 
+(defn L1-distance-from-top-result
+  "Compares the expected result to the top item on the indicated result stack, returning the absolute deviation; if it is missing, `missing-value` is returned instead. If expected-hash includes multiple items, they are all returned. If any items a non-numeric types, 0.0 is returned if they are equal, 1.0 otherwise."
+  [expected-hash results-hash missing-value]
+  (let [k      (first (keys expected-hash))
+        target (k expected-hash)
+        guess  (first (k results-hash))]
+    (if (nil? guess)
+      missing-value
+      (if (number? guess)
+        (double (math/abs (- target guess)))
+        (if (= target guess) 0.0 1.0)
+        ))))
+
+
 (defn error-rubric
-  "Creates a new ErrorRubric record. Both keyworded arguments are necessary (:testcase and :score-fn)"
+  "Creates a new ErrorRubric record. Both keyworded arguments are necessary (:testcase and :score-fn). The `score-fn` should accept a hash-map produced by `extract-results`, which should contain all information needed for the scoring, and should return a single numerical value, with lower score values preferred."
   [& {:keys [testcase score-fn]}]
   (->ErrorRubric
     (uuid/v1)
     testcase
     score-fn))
+
 
 
