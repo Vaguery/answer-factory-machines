@@ -12,7 +12,7 @@
 
 
 (def dude1
-  (set-scores (make-pushanswer []) {:f1 8 :f2 22}))
+  (set-scores (make-pushanswer [] :bb8) {:f1 8 :f2 22}))
 
 
 (fact "dude1 has some scores"

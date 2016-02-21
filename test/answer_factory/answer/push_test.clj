@@ -3,7 +3,32 @@
   (:use answer-factory.answer.push))
 
 
-(fact "I can make a new PushAnswer"
-  (:genome (make-pushanswer [1 2 3])) => [1 2 3]
-  (:scores (make-pushanswer [1 2 3])) => {}
-  (class (:id (make-pushanswer [1 2 3]))) => java.util.UUID)
+(fact "make-pushanswer creates a new UUID id"
+  (class (:id (make-pushanswer [] :bb8))) => java.util.UUID)
+
+
+(fact "make-pushanswer accepts a genome and dialect argument"
+  (:genome (make-pushanswer [] :bb8)) => []
+  (:dialect (make-pushanswer [] :bb8)) => :bb8
+  )
+
+
+(fact "make-pushanswer throws an exception if an unrecognized dialect is specified"
+  (make-pushanswer [] :bad-dates) => (throws #"unknown genome dialect"))
+
+
+(fact "make-pushanswer knows about bb8 genomes"
+  (:program (make-pushanswer [] :bb8)) => []
+  (:program (make-pushanswer [{:from :prev, :put :R, :item 1}     
+                              {:from :down, :put :L, :item '()}   
+                              {:from :append, :put :L, :item '()} 
+                              {:from :prev, :put :L, :item 4}     
+                              {:from :prev, :put :R, :item 5}     
+                              {:from :prev, :put :R, :item 6}] :bb8)) => '[(6) (4) 5 1]
+  )
+
+
+(fact "make-pushanswer knows about plush genomes"
+  (:program (make-pushanswer [] :plush)) => []
+  ; (:program (make-pushanswer [] :bb8)) => [(6) (4) 5 1]
+  )

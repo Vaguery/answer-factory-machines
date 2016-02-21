@@ -387,6 +387,10 @@
                   '[:branches () (2) (:branches () () ())])
 
 
+;; derived-push-branch-map
+
+(fact "derived-push-branch-map is a thing"
+  (keys derived-push-branch-map) => (contains :code-quote))
 
 ;; some acceptance tests & bug fixes
 
@@ -437,6 +441,27 @@
   '[:exec-do*times (8 11) :exec-if ()
     (17  false :code-quote (:float-mult)  :exec-rot (34.44) () ())])
 ;;      ^ CHANGE                CHANGE  ^
+
+
+;; derived-push-branch-map (the default)
+
+
+(fact "if not given, the plush->push branch-map is derived from an Interpreter instance directly"
+  (plush->push []) => []
+  (plush->push [{:item 1 :close 0}
+                {:item 2 :close 0}
+                {:item 3 :close 0}]) => [1 2 3]
+  (plush->push [{:item :code-quote :close 0}
+                {:item 2 :close 0}
+                {:item 3 :close 0}]) => '[:code-quote (2 3)]
+  (plush->push [{:item :code-quote :close 0}
+                {:item 2 :close 1}
+                {:item 3 :close 0}]) => '[:code-quote (2) 3]
+  (plush->push [{:item :code-quote :close 1}
+                {:item 2 :close 0}
+                {:item 3 :close 0}]) => '[:code-quote () 2 3]
+  (plush->push [{:item :exec-rotate :close 0}
+                {:item :exec-rotate :close 0}]) => '[:exec-rotate (:exec-rotate () () ()) () ()])
 
 
 ;;; push->plush

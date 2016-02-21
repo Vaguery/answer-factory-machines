@@ -108,4 +108,14 @@
     score-fn))
 
 
+(defn score-answer
+  [answer rubric]
+  (let [p      (:program answer)
+        tc     (:testcase rubric)
+        score! (:score-fn rubric)]
+    ( ( score!
+        (exercise-test-case tc p)
+        (:expected tc)
+        100000000.0) )
+    ))
 

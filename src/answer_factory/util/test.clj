@@ -8,5 +8,5 @@
 
 (defn dude-with-scores
   [scores]
-  (set-scores (make-pushanswer []) scores))
+  (set-scores (make-pushanswer [] :bb8) scores))
 

@@ -1,6 +1,7 @@
 (ns answer-factory.rubric.rubric-test
   (:use midje.sweet)
   (:use answer-factory.rubric.push)
+  (:require  [answer-factory.answer.push :as a])
   (:require [push.core :as push])
   (:require [push.interpreter.core :as i]))
 
@@ -96,6 +97,7 @@
   (L1-distance-from-top-result {:y 8} {:y '(13 7 121)} :missing) => 5.0
   (L1-distance-from-top-result {:y 8} {:y '(8 7 121)} :missing) => 0.0
   (L1-distance-from-top-result {:y 8} {:y '()} :missing) => :missing
+  (L1-distance-from-top-result {:y 8} {:y '()} 100000000.0) => 100000000.0
   (L1-distance-from-top-result {:y 8} {:x '(2)} :missing) => :missing
   
   (L1-distance-from-top-result {:y false} {:y '(false)} :missing) => 0.0
@@ -119,7 +121,14 @@
 ;;
 
 
-
+; (fact "score-answer"
+;   (let [tc (test-case :inputs {:x 8}
+;                       :expected {:integer 7} 
+;                       :config {:step-limit 100})
+;         r  (error-rubric tc L1-distance-from-top-result)
+;         a1 (a/make-pushanswer [] :bb8)]
+;     (score-answer )
+;         ))
 
 
 ;; make ErrorRubric headless!

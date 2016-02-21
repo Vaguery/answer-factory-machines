@@ -1,6 +1,19 @@
 (ns answer-factory.genome.plush
   (:require [clojure.zip :as zip])
+  (:require [push.core :as push])
   (:require [answer-factory.genome.bb8 :as bb8]))
+
+
+(def derived-push-branch-map
+  "This definition constructs a branch-map for use as a default in plush->push translation, using a heuristic Tom Helmuth implemented in the Clojush interpreter of counting the number of `:exec` items used by each instruction. To calculate that here, it creates a Klapaucius Interpreter using the one-with-everything template, and interrogates each registered instruction's :needs table."
+  (reduce
+    (fn [m [k v]]
+      (merge m (if (some #{:exec} (keys (:needs v)))
+                  {k (:exec (:needs v))}
+                  {})))
+    {}
+    (:instructions (push/interpreter)))
+  )
 
 
 (defn clean-insert
@@ -160,16 +173,17 @@
 
 (defn plush->push
   "takes a genome (collection of Plush gene maps) and a branch-map (map), and creates a complete Push program based on the specified gene values and the branch-map directives"
-  [genome branch-map]
-  (loop [program   (empty-program)
-         gene      (first genome)
-         remainder (rest genome)
-         stack     (list)]
-    (if (nil? gene)
-      (into [] (zip/root (first (close-up-n [program stack] (count stack)))))
-      (let [[p s] (apply-one-gene-to-state
-                    [program stack] gene branch-map)]
-        (recur p (first remainder) (rest remainder) s)))))
+  ([genome] (plush->push genome derived-push-branch-map))
+  ([genome branch-map]
+    (loop [program   (empty-program)
+           gene      (first genome)
+           remainder (rest genome)
+           stack     (list)]
+      (if (nil? gene)
+        (into [] (zip/root (first (close-up-n [program stack] (count stack)))))
+        (let [[p s] (apply-one-gene-to-state
+                      [program stack] gene branch-map)]
+          (recur p (first remainder) (rest remainder) s))))))
 
 
 

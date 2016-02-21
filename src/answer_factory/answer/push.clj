@@ -1,13 +1,21 @@
 (ns answer-factory.answer.push
-  (:require [clj-uuid :as uuid]))
+  (:require [clj-uuid :as uuid])
+  (:require [answer-factory.genome.bb8 :as bb8])
+  (:require [answer-factory.genome.plush :as plush])
+  )
 
 
-(defrecord PushAnswer [id genome scores])
+(defrecord PushAnswer [id genome dialect program])
 
 (defn make-pushanswer
-  "Builds a PushAnswer record from a given genome; creates a random uuid (using v1, from which a timestamp of creation can be derived if needed), and leaves the scores empty."
-  [g]
-  (->PushAnswer (uuid/v1) g {}))
+  "Builds a new PushAnswer record from a given genome: creates a random uuid, and translates the genome into a program using the designated dialect."
+  [g d]
+  (->PushAnswer (uuid/v1) g d 
+    (cond
+      (= d :bb8)   (bb8/bb8->push g)
+      (= d :plush) (plush/plush->push g)
+      :else (throw (Exception. "unknown genome dialect")))
+    ))
 
 
 (defn get-score
