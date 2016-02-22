@@ -1,6 +1,7 @@
 (ns design-spikes.bb8-simple
   (:use midje.sweet)
   (:require [clojure.zip :as zip])
+  (:require [clj-uuid :as uuid])
   (:require [push.core :as p])
   (:require [push.interpreter.core :as i])
   (:use [answer-factory.genome.bb8])
@@ -204,6 +205,7 @@
 (defn genome->sql
   [genome]
   {:genome (pr-str genome)
+   :uuid (pr-str (uuid/v1))
    :program (pr-str (bb8->push genome))
    :timestamp (pr-str (t/local-now))})
 

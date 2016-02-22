@@ -1,5 +1,6 @@
 {:up ["CREATE TABLE rubrics (
         ID INTEGER PRIMARY KEY    NOT NULL,
+        uuid      TEXT            NOT NULL,
         name      TEXT            NOT NULL,
         function  TEXT            NOT NULL);"]
  :down ["DROP TABLE rubrics;"]}

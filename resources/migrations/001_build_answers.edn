@@ -1,5 +1,6 @@
 {:up ["CREATE TABLE answers (
         ID INTEGER PRIMARY KEY               NOT NULL,
+        uuid TEXT                            NOT NULL,
         genome TEXT                          NOT NULL,
         program TEXT                         NOT NULL,
         timestamp TEXT                       NOT NULL);"]
