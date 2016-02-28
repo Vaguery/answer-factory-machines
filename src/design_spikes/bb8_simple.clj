@@ -32,6 +32,7 @@
 
 ;; some random code generators
 
+
 (defn random-instruction
   [interpreter]
   (p/known-instructions interpreter))
@@ -204,8 +205,8 @@
 
 (defn genome->sql
   [genome]
-  {:genome (pr-str genome)
-   :uuid (pr-str (uuid/v1))
+  {:id (pr-str (uuid/v4))
+   :genome (pr-str genome)
    :program (pr-str (bb8->push genome))
    :timestamp (pr-str (t/local-now))})
 
@@ -239,17 +240,10 @@
      }))
 
 
-
-
-; (println (map #((:results-fn %) my-interpreter) (simple-training-set 
-;               my-interpreter
-;               [[{:a 8} {:y 14}]
-;                 [{:a 19} {:y 25}]
-;                 [{:a -3} {:y 3}]])))
-
-;; saved for later:
-; SELECT *
-; FROM t
-; WHERE num = (SELECT MIN(num)
-;              FROM t AS t2
-;              WHERE t2.text = t.text);
+(println (map :inputs (simple-training-set
+  (p/interpreter :bindings {:x1 1 :x2 11})
+  [ [{:x1 8 :x2 12} {:y 200}]
+    [{:x1 3 :x2 11} {:y 140}]
+    [{:x1 18 :x2 2} {:y 200}] ]
+  ))
+)

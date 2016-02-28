@@ -1,6 +1,6 @@
 {:up ["CREATE TABLE scores (
-        answers_id   INTEGER         NOT NULL,
-        rubrics_id   INTEGER         NOT NULL,
+        answers_id   TEXT            NOT NULL,
+        rubrics_id   TEXT            NOT NULL,
         score        REAL,
         FOREIGN KEY (answers_id) REFERENCES answers(id),
         FOREIGN KEY (rubrics_id) REFERENCES rubrics(id),

@@ -2,11 +2,19 @@
   (:require [answer-factory.answer.push :as answer]))
 
 
+;; Notes on the fundamental structure of the data store and how it affects function calls.
+;;
+;; The Answers table contains information about genomes and programs only.
+;; The Rubrics table contain information about running and evaluating programs only.
+;; The Scores table contain all info about scores obtained when applying a Rubric to an Answer
+;;
+;; Thus, for consistency all selection operators are built to take TWO arguments: a collection of Answer records, and a collection of Score records.
+
 
 (defn uniform-selection
-  "return a single element of the collection passed in, selected at random with uniform probability"
-  [things]
-  (rand-nth things))
+  "Returns a single element of the `answers` collection passed in, selected at random with uniform probability, disregarding the `scores` argument (which is still required)"
+  [answers scores]
+  (rand-nth answers))
 
 
 
@@ -18,24 +26,24 @@
       answers))
 
 
-(defn filter-by-rubric
-  "takes a collection of answers (which contain a map called :scores), and a keyword which is the name of one of those scores; returns the reduced collection after removing any with nil scores for that rubric only!"
-  [answers rubric]
-  (let [get-rubric #(answer/get-score % rubric)]
-    (->> (purge-nils answers [rubric])
-         (sort-by get-rubric)
-         (partition-by get-rubric)
-         first)))
+; (defn filter-by-rubric
+;   "takes a collection of answers (which contain a map called :scores), and a keyword which is the name of one of those scores; returns the reduced collection after removing any with nil scores for that rubric only!"
+;   [answers rubric]
+;   (let [get-rubric #(answer/get-score % rubric)]
+;     (->> (purge-nils answers [rubric])
+;          (sort-by get-rubric)
+;          (partition-by get-rubric)
+;          first)))
 
 
-(defn lexicase-selection
-  "takes a collection of answers (which each contain a map called :scores), and a collection of keywords which name the particular scores to use in selection; returns one answer"
-  [answers rubrics]
-  (rand-nth
-    (reduce 
-      filter-by-rubric 
-      (purge-nils answers rubrics)
-      (shuffle rubrics))))
+; (defn lexicase-selection
+;   "takes a collection of answers (which each contain a map called :scores), and a collection of keywords which name the particular scores to use in selection; returns one answer"
+;   [answers rubrics]
+;   (rand-nth
+;     (reduce 
+;       filter-by-rubric 
+;       (purge-nils answers rubrics)
+;       (shuffle rubrics))))
 
 
 

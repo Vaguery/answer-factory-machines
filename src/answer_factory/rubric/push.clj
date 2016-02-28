@@ -41,7 +41,7 @@
         output-bindings
           (s/difference (set (keys expected)) (set (keys (:stacks interpreter))))]
   (->TestCase
-    (uuid/v1)
+    (uuid/v4)
     note
     (-> interpreter
         (assoc :config (merge (:config interpreter) config))

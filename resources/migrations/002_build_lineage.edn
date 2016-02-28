@@ -1,8 +1,8 @@
 {:up ["CREATE TABLE lineage (
-        answer    INTEGER PRIMARY KEY        NOT NULL,
-        uuid      TEXT                       NOT NULL,
-        ancestor  INTEGER                    NOT NULL,
-        relation  TEXT                       NOT NULL,
-        FOREIGN KEY (answer)   REFERENCES answers(id),
-        FOREIGN KEY (ancestor) REFERENCES answers(id));"]
+        answer_id    TEXT                       NOT NULL,
+        ancestor_id  TEXT                       NOT NULL,
+        relation     TEXT                       NOT NULL,
+        FOREIGN KEY (answer_id)   REFERENCES answers(id),
+        FOREIGN KEY (ancestor_id) REFERENCES answers(id),
+        PRIMARY KEY(answer_id, ancestor_id) );"]
  :down ["DROP TABLE lineage;"]}
