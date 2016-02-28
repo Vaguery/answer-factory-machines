@@ -1,16 +1,32 @@
 (ns answer-factory.operator.lexicase-test
   (:use midje.sweet)
   (:use answer-factory.answer.push)
+  (:require [answer-factory.util.selection-fixtures :as fixtures])
   (:use answer-factory.operator.select)
   (:use answer-factory.util.test))
 
 
-;; some fixtures
+
+(fact "lexicase-selection will return the one answer if only one was passed in"
+  (count (lexicase-selection
+    (list (first fixtures/some-guys))
+    fixtures/random-scores
+    fixtures/some-rubrics)) => 1)
 
 
-; (fact "lexicase-selection will return the one answer if only one was passed in"
-;   (let [dude (dude-with-scores {})]
-;     (lexicase-selection [dude] []) => dude))
+(fact "lexicase-selection will do simple-selection if only one rubric is used"
+  (lexicase-selection
+    fixtures/some-guys
+    fixtures/random-scores
+    (list (first fixtures/some-rubrics))) =>
+  (simple-selection fixtures/some-guys fixtures/random-scores (first fixtures/some-rubrics)))
+
+
+(fact "lexicase-selection does no filtering if no rubrics are specified"
+  (lexicase-selection
+    fixtures/some-guys
+    fixtures/random-scores
+    (list)) => fixtures/some-guys)
 
 
 ; (fact "lexicase-selection will return the answer with the best score in a single objective"

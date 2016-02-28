@@ -20,45 +20,45 @@
 
 (fact "scores-for-answer"
   (let [one-answer (first fixtures/some-guys)]
-  (count (scores-for-answer fixtures/some-scores one-answer)) => 3))
+  (count (scores-for-answer fixtures/random-scores one-answer)) => 3))
 
 
 (fact "scores-for-rubric"
   (let [one-rubric (first fixtures/some-rubrics)]
-  (count (scores-for-rubric fixtures/some-scores one-rubric)) => 5))
+  (count (scores-for-rubric fixtures/random-scores one-rubric)) => 5))
 
 
 (fact "numeric only throws an exception if the result is empty"
-  (numeric-only fixtures/some-scores (rubric/error-rubric)) =>
+  (numeric-only fixtures/random-scores (rubric/error-rubric)) =>
     (throws #"No valid scores for rubric :id") )
 
 
 (fact "simple selection returns a vector of answers"
   (let [one-rubric (first fixtures/some-rubrics)]
-    (type (simple-selection fixtures/some-guys fixtures/some-scores one-rubric)) =>
+    (type (simple-selection fixtures/some-guys fixtures/random-scores one-rubric)) =>
       clojure.lang.PersistentVector
-    (type (first (simple-selection fixtures/some-guys fixtures/some-scores one-rubric))) =>
+    (type (first (simple-selection fixtures/some-guys fixtures/random-scores one-rubric))) =>
       answer_factory.answer.push.PushAnswer))
 
 
 (fact "simple selection returns the items with the lowest score indicated by the rubric argument"
   (let [one-rubric (first fixtures/some-rubrics)
-        winners (simple-selection fixtures/some-guys fixtures/some-scores one-rubric)]
+        winners (simple-selection fixtures/some-guys fixtures/random-scores one-rubric)]
     (count winners) => 1
     fixtures/some-guys => (contains winners)
 
     (:answer-id
-      (first (sort-by :score (scores-for-rubric fixtures/some-scores one-rubric)))) =>
+      (first (sort-by :score (scores-for-rubric fixtures/random-scores one-rubric)))) =>
       (:id (first winners))))
 
 
 (fact "simple-selection ignores unevaluated scores"
   (let [one-rubric (first fixtures/some-rubrics)
-        missing-scores (-> (assoc-in fixtures/some-scores [0 :score] :missing)
-                           (assoc-in , [3 :score] :missing)
-                           (assoc-in , [6 :score] :missing)
-                           (assoc-in , [9 :score] :missing)
-                           (assoc-in , [12 :score] :missing))]
+        missing-scores (fixtures/make-score-table [:missing 1 2
+                                                   :missing 3 4
+                                                   :missing 5 6
+                                                   :missing 7 8
+                                                   :missing 9 0])]
     (simple-selection fixtures/some-guys missing-scores one-rubric) => 
       (throws #"No valid scores for rubric :id") ;; every score with that rubric removed
     (simple-selection

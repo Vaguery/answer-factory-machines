@@ -57,28 +57,17 @@
     (into [] (filter #(appears-on-list-of-ids? % winning-ids) answers))))
 
 
-
-
-
-; (defn filter-by-rubric
-;   "takes a collection of answers (which contain a map called :scores), and a keyword which is the name of one of those scores; returns the reduced collection after removing any with nil scores for that rubric only!"
-;   [answers rubric]
-;   (let [get-rubric #(answer/get-score % rubric)]
-;     (->> (purge-nils answers [rubric])
-;          (sort-by get-rubric)
-;          (partition-by get-rubric)
-;          first)))
-
-
-; (defn lexicase-selection
-;   "takes a collection of answers (which each contain a map called :scores), and a collection of keywords which name the particular scores to use in selection; returns one answer"
-;   [answers rubrics]
-;   (rand-nth
-;     (reduce 
-;       filter-by-rubric 
-;       (purge-nils answers rubrics)
-;       (shuffle rubrics))))
-
+(defn lexicase-selection
+  "Takes a collection of Answer records, a collection of Scores, and a collection of Rubric records. NOTE: returns all answers which filter through; does not sample at the end."
+  [answers scores rubrics]
+  (loop [survivors answers
+         criteria (shuffle rubrics)]
+    (cond (empty? criteria) survivors
+          (= 1 (count survivors)) survivors
+          :else
+            (let [criterion (first criteria)]
+              (recur (simple-selection survivors scores criterion)
+                     (rest criteria))))))
 
 
 ;; multiobjective selection
