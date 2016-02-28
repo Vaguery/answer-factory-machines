@@ -2,6 +2,7 @@
   (:use midje.sweet)
   (:require [answer-factory.util.selection-fixtures :as fixtures])
   (:require [clj-uuid :as uuid])
+  (:require [answer-factory.rubric.push :as rubric])
   (:use answer-factory.operator.select))
 
 
@@ -27,6 +28,11 @@
   (count (scores-for-rubric fixtures/some-scores one-rubric)) => 5))
 
 
+(fact "numeric only throws an exception if the result is empty"
+  (numeric-only fixtures/some-scores (rubric/error-rubric)) =>
+    (throws #"No valid scores for rubric :id") )
+
+
 (fact "simple selection returns a vector of answers"
   (let [one-rubric (first fixtures/some-rubrics)]
     (type (simple-selection fixtures/some-guys fixtures/some-scores one-rubric)) =>
@@ -46,9 +52,12 @@
       (:id (first winners))))
 
 
-(future-fact "simple-selection ignores unevaluated scores"
+(fact "simple-selection ignores unevaluated scores"
   (let [one-rubric (first fixtures/some-rubrics)
-        missing-scores (assoc-in fixtures/some-scores [0 :score] :missing)
-        winners (simple-selection fixtures/some-guys missing-scores one-rubric)]
-    (first winners) => 88
-    ))
+        missing-scores (-> (assoc-in fixtures/some-scores [0 :score] :missing)
+                           (assoc-in , [3 :score] :missing)
+                           (assoc-in , [6 :score] :missing)
+                           (assoc-in , [9 :score] :missing)
+                           (assoc-in , [12 :score] :missing))]
+    (simple-selection fixtures/some-guys missing-scores one-rubric) => 
+      (throws #"No valid scores for rubric :id")))

@@ -1,7 +1,6 @@
 (ns answer-factory.operator.select
   (:require [answer-factory.answer.push :as answer]))
 
-
 ;; Notes on the fundamental structure of the data store and how it affects function calls.
 ;;
 ;; The Answers table contains information about genomes and programs only.
@@ -37,22 +36,28 @@
   (boolean (some #{(:id answer)} list-of-ids)))
 
 
+(defn numeric-only
+  "Takes a table of score records, and a single Rubric record; removes all records from the collection of records where the indicated Rubric does not have numeric value. Throws an exception if the resulting collection would be empty"
+  [scores rubric]
+  (let [result
+    (remove #( (complement number?) (:score %)) (scores-for-rubric scores rubric))]
+    (if (empty? result)
+      (throw
+        (Exception. (str "No valid scores for rubric :id " (:id rubric))))
+      result)))
+
+
 (defn simple-selection
   "Takes a collection of Answer records, a collection of Scores, and a single Rubric record. Returns all Answers which have the lowest score on the indicated rubric."
   [answers scores rubric]
-  (let [useful-scores (scores-for-rubric scores rubric)
+  (let [useful-scores (numeric-only scores rubric)
         min-score     (apply min (map :score useful-scores))
         best-scores   (filter #(= (:score %) min-score) useful-scores)
         winning-ids   (map :answer-id best-scores)]
     (into [] (filter #(appears-on-list-of-ids? % winning-ids) answers))))
 
 
-(defn purge-nils
-  "purge-nils removes all answers in the collection where any of the explicitly listed scores has a nil value"
-  [answers rubrics]
-    (filter
-      #(not-any? nil? (map (:scores %) (set rubrics)))
-      answers))
+
 
 
 ; (defn filter-by-rubric
