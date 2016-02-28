@@ -4,7 +4,6 @@
   (:use answer-factory.operator.select))
 
 
-
 (fact "uniform selection returns a vector of answers"
   (type (uniform-selection fixtures/some-guys fixtures/some-scores)) =>
     clojure.lang.PersistentVector

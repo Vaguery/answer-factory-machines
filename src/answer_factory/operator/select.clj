@@ -17,6 +17,35 @@
   [(rand-nth answers)])
 
 
+(defn scores-for-answer
+  "Takes a collection of Score hashmaps, and a single Answer record, and returns the subset of the scores which refer to that Answer by :id"
+  [scores answer]
+  (let [which (:id answer)]
+    (filter #(= (:answer-id %) which) scores)))
+
+
+(defn scores-for-rubric
+  "Takes a collection of Score hashmaps, and a single Rubric record, and returns the subset of the scores which refer to that Rubric by :id"
+  [scores rubric]
+  (let [which (:id rubric)]
+    (filter #(= (:rubric-id %) which) scores)))
+
+
+(defn appears-on-list-of-ids?
+  "Takes an answer and a collection of :id values, and returns true if the answer's :id appears on the list"
+  [answer list-of-ids]
+  (boolean (some #{(:id answer)} list-of-ids)))
+
+
+(defn simple-selection
+  "Takes a collection of Answer records, a collection of Scores, and a single Rubric record. Returns all Answers which have the lowest score on the indicated rubric."
+  [answers scores rubric]
+  (let [useful-scores (scores-for-rubric scores rubric)
+        min-score     (apply min (map :score useful-scores))
+        best-scores   (filter #(= (:score %) min-score) useful-scores)
+        winning-ids   (map :answer-id best-scores)]
+    (into [] (filter #(appears-on-list-of-ids? % winning-ids) answers))))
+
 
 (defn purge-nils
   "purge-nils removes all answers in the collection where any of the explicitly listed scores has a nil value"

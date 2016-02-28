@@ -18,8 +18,8 @@
 
 
 (def some-scores
-  (for [dude some-guys
+  (into [] (for [dude some-guys
         rubr some-rubrics]
         {:answer-id (:id dude)
          :rubric-id (:id rubr)
-         :score (rand)}))
+         :score (rand)})))
