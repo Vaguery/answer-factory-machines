@@ -14,7 +14,7 @@
 (defn uniform-selection
   "Returns a single element of the `answers` collection passed in, selected at random with uniform probability, disregarding the `scores` argument (which is still required)"
   [answers scores]
-  (rand-nth answers))
+  [(rand-nth answers)])
 
 
 
