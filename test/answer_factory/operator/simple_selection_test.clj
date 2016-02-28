@@ -60,4 +60,9 @@
                            (assoc-in , [9 :score] :missing)
                            (assoc-in , [12 :score] :missing))]
     (simple-selection fixtures/some-guys missing-scores one-rubric) => 
-      (throws #"No valid scores for rubric :id")))
+      (throws #"No valid scores for rubric :id") ;; every score with that rubric removed
+    (simple-selection
+      fixtures/some-guys
+      (assoc-in missing-scores [0 :score] 999)
+      one-rubric) => (vector (first fixtures/some-guys))
+      ))
