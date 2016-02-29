@@ -242,70 +242,70 @@
 
 
 
-;; nondominated
+;; nondominated-selection
 
-(fact "nondominated removes all dominated answers"
+(fact "nondominated-selection removes all dominated answers"
   (let [scores  (fixtures/make-score-table [1 1 0
                                             1 0 1
                                             0 1 1
                                             0 1 2
                                             0 0 0])]
-  (nondominated
+  (nondominated-selection
     fixtures/some-guys
     scores
     fixtures/some-rubrics) => [(last fixtures/some-guys)]
-  (nondominated
+  (nondominated-selection
     (take 4 fixtures/some-guys)
     scores
     fixtures/some-rubrics) => (take 3 fixtures/some-guys)))
 
 
 
-(fact "nondominated obeys rubric lists"
+(fact "nondominated-selection obeys rubric lists"
   (let [scores  (fixtures/make-score-table [1 1 0
                                             1 0 1
                                             0 1 1
                                             0 1 2
                                             0 0 0])]
-  (nondominated
+  (nondominated-selection
     fixtures/some-guys
     scores
     (take 1 fixtures/some-rubrics)) => (drop 2 fixtures/some-guys)
-  (nondominated
+  (nondominated-selection
     (take 4 fixtures/some-guys)
     scores
     (drop 2 fixtures/some-rubrics)) => (take 1 fixtures/some-guys)))
 
 
 
-(fact "nondominated retains any Answers with missing scores"
+(fact "nondominated-selection retains any Answers with missing scores"
   (let [scores  (fixtures/make-score-table [1 1 0
                                             1 0 nil
                                             0 1 1
                                             0 1 2
                                             0 0 0])]
-  (nondominated
+  (nondominated-selection
     fixtures/some-guys
     scores
     fixtures/some-rubrics) => (list (nth fixtures/some-guys 1) (last fixtures/some-guys))
-  (nondominated
+  (nondominated-selection
     fixtures/some-guys
     scores
     (drop 2 fixtures/some-rubrics)) =>
       (list (first fixtures/some-guys) (nth fixtures/some-guys 1) (last fixtures/some-guys))))
 
 
-(fact "nondominated retains any Answers with keyword scores"
+(fact "nondominated-selection retains any Answers with keyword scores"
   (let [scores  (fixtures/make-score-table [1 1 0
                                             1 0 :missing
                                             0 1 1
                                             0 1 2
                                             0 0 0])]
-  (nondominated
+  (nondominated-selection
     fixtures/some-guys
     scores
     fixtures/some-rubrics) => (list (nth fixtures/some-guys 1) (last fixtures/some-guys))
-  (nondominated
+  (nondominated-selection
     fixtures/some-guys
     scores
     (drop 2 fixtures/some-rubrics)) =>
@@ -356,3 +356,48 @@
     fixtures/some-guys
     scores
     (drop 2 fixtures/some-rubrics))) => [(nth fixtures/some-guys 3)]))
+
+
+
+;;; most-dominated-cull
+
+(fact "most-dominated-cull removes all the 'most' dominated answers"
+  (let [scores  (fixtures/make-score-table [9 3 3
+                                            1 0 1
+                                            0 1 1
+                                            0 1 2
+                                            0 0 0])]
+  (most-dominated-cull
+    fixtures/some-guys
+    scores
+    fixtures/some-rubrics) => (drop 1 fixtures/some-guys)
+  (most-dominated-cull
+    (drop 1 fixtures/some-guys)
+    scores
+    fixtures/some-rubrics) => (map #(nth fixtures/some-guys %) [1 2 4])
+  ))
+
+
+
+(fact "most-dominated-cull will not eliminate everybody"
+  (let [scores  (fixtures/make-score-table [1 2 3
+                                            1 2 3
+                                            1 2 3
+                                            1 2 3
+                                            1 2 3])]
+  (most-dominated-cull
+    fixtures/some-guys
+    scores
+    fixtures/some-rubrics) => fixtures/some-guys))
+
+
+(fact "most-dominated-cull does not remove answers with non-numeric scores"
+  (let [scores  (fixtures/make-score-table [1 2 :bad
+                                            1 2 3
+                                          nil 2 3
+                                            1 2 3
+                                            1 2 3])]
+  (most-dominated-cull
+    fixtures/some-guys
+    scores
+    fixtures/some-rubrics) => fixtures/some-guys))

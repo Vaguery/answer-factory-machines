@@ -79,3 +79,62 @@
       a-and-b
       (take 2 fixtures/some-rubrics)) => (map #(nth fixtures/some-guys %) '(0 2))))
 
+
+
+;;; lexicase-cull
+
+
+(fact "lexicase-cull will remove everybody if they are all equivalent!"
+  (let [column1 (fixtures/make-score-table [1 1 1
+                                            1 1 1
+                                            1 1 1
+                                            1 1 1
+                                            1 1 1])]
+    (lexicase-cull
+      fixtures/some-guys
+      column1
+      fixtures/some-rubrics) => (list)
+))
+
+
+
+(fact "lexicase-cull will remove the worst if it's obvious"
+  (let [column1 (fixtures/make-score-table [1 1 1
+                                            1 1 1
+                                            0 1 1
+                                            0 0 1
+                                            0 0 0])]
+    (lexicase-cull
+      fixtures/some-guys
+      column1
+      fixtures/some-rubrics) => (drop 2 fixtures/some-guys)
+))
+
+
+(fact "lexicase-cull pays attention to the rubrics"
+  (let [column1 (fixtures/make-score-table [1 1 1
+                                            1 1 1
+                                            0 1 1
+                                            0 0 1
+                                            0 0 0])]
+    (lexicase-cull
+      fixtures/some-guys
+      column1
+      (drop 1 fixtures/some-rubrics)) => (drop 3 fixtures/some-guys)
+    (lexicase-cull
+      fixtures/some-guys
+      column1
+      (drop 2 fixtures/some-rubrics)) => (drop 4 fixtures/some-guys)))
+
+
+(fact "WARNING lexicase-cull retains the dudes with the bad scores"
+  (let [column1 (fixtures/make-score-table [1 1 :bad
+                                          nil 1 1
+                                            1 1 1
+                                            1 1 1
+                                            1 1 1])]
+    (lexicase-cull
+      fixtures/some-guys
+      column1
+      fixtures/some-rubrics) => (take 2 fixtures/some-guys)
+))

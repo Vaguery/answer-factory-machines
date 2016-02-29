@@ -101,6 +101,23 @@
                      (rest criteria))))))
 
 
+(defn negate-score
+  "Takes a Score record, and negates the score if it's numerical. Leaves it alone otherwise."
+  [s]
+  (if (number? (:score s))
+    (assoc s :score (- (:score s)))
+    s))
+
+
+
+(defn lexicase-cull
+  "Takes a collection of Answer records, a collection of Scores, and a collection of Rubric records. Performs lexicase-selection on the _inverted_ score table: that is, it negates all numerical score values and then does lexicase-selection on that. Returns the population _lacking_ the worst-scoring individual(s). NOTES: Answers with non-numeric scores will be retained, not culled. Also, if all scores are equivalent, lexicase-cull can produce an empty result!"
+  [answers scores rubrics]
+  (let [backwards-scores (map negate-score scores)
+        loser-ids        (map :id (lexicase-selection answers backwards-scores rubrics))]
+    (remove #(some #{(:id %)} loser-ids) answers)))
+
+
 
 (defn salient-scores
   "takes one Answer record, a collection of Scores, and a collection of Rubric records, and returns a vector of the scores associated with those Rubrics, or nil if missing."
@@ -138,7 +155,7 @@
 
 
 
-(defn nondominated
+(defn nondominated-selection
   "Takes a collection of answers, scores and rubrics, and removes any that are dominated by any others on the specified rubrics. NOTE: If any score for a specified Rubric is non-numeric for ANY Answer, NO answers are removed!"
   [answers scores rubrics]
   (reduce
@@ -155,8 +172,20 @@
          layers    [] ]
     (if (empty? remainder)
       layers
-      (let [best      (nondominated remainder scores rubrics)
+      (let [best      (nondominated-selection remainder scores rubrics)
             best-ids  (map :id best)
             less-best (remove #(some #{= (:id %)} best-ids) remainder)]
         (recur less-best
                (conj layers best))))))
+
+
+
+(defn most-dominated-cull
+  "Takes collections of answers, scores, and rubrics, and removes the _most dominated_ answers in the collection, according to the specified rubrics. If no answer is dominated, they are all returned. NOTE: The algorithm applies `nondomination-sort` and removes the last subset found, unless there is only one."
+  [answers scores rubrics]
+  (let [sorted (nondomination-sort answers scores rubrics)]
+    (if (= 1 (count sorted))
+      answers
+      (let [loser-ids (map :id (last sorted))]
+        (remove #(some #{(:id %)} loser-ids) answers)))))
+
