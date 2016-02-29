@@ -10,10 +10,24 @@
 ;; Thus, for consistency all selection operators are built to take TWO arguments: a collection of Answer records, and a collection of Score records.
 
 
+
 (defn uniform-selection
   "Returns a single element of the `answers` collection passed in, selected at random with uniform probability, disregarding the `scores` argument (which is still required)"
   [answers scores]
-  [(rand-nth answers)])
+  (if (empty? answers)
+    (throw (Exception. "uniform-selection attempted on an empty collection"))
+    [(rand-nth answers)]))
+
+
+
+(defn uniform-cull
+  "Returns the `answers` collection passed in with a randomly selected item removed, disregarding the `scores` argument (which is still required)"
+  [answers scores]
+  (if (empty? answers)
+    (throw (Exception. "uniform-cull attempted on an empty collection"))
+    (let [which (rand-int (count answers))]
+      (into [] (concat (take which answers) (drop (inc which) answers))))))
+
 
 
 (defn scores-for-answer
@@ -23,6 +37,7 @@
     (filter #(= (:answer-id %) which) scores)))
 
 
+
 (defn scores-for-rubric
   "Takes a collection of Score hashmaps, and a single Rubric record, and returns the subset of the scores which refer to that Rubric by :id"
   [scores rubric]
@@ -30,10 +45,12 @@
     (filter #(= (:rubric-id %) which) scores)))
 
 
+
 (defn appears-on-list-of-ids?
   "Takes an answer and a collection of :id values, and returns true if the answer's :id appears on the list"
   [answer list-of-ids]
   (boolean (some #{(:id answer)} list-of-ids)))
+
 
 
 (defn numeric-only
@@ -47,6 +64,7 @@
       result)))
 
 
+
 (defn simple-selection
   "Takes a collection of Answer records, a collection of Scores, and a single Rubric record. Returns ALL Answers which have the lowest score on the indicated rubric."
   [answers scores rubric]
@@ -55,6 +73,19 @@
         best-scores   (filter #(= (:score %) min-score) useful-scores)
         winning-ids   (map :answer-id best-scores)]
     (into [] (filter #(appears-on-list-of-ids? % winning-ids) answers))))
+
+
+
+(defn simple-cull
+  "Takes a collection of Answer records, a collection of Scores, and a single Rubric record. Removes ALL Answers which have the largest score on the indicated rubric."
+  [answers scores rubric]
+  (let [useful-scores (numeric-only scores rubric)
+        max-score     (apply max (map :score useful-scores))
+        dead-scores   (filter #(= (:score %) max-score) useful-scores)
+        losing-ids    (map :answer-id dead-scores)]
+    (into [] (remove #(appears-on-list-of-ids? % losing-ids) answers))))
+
+
 
 
 (defn lexicase-selection
@@ -68,6 +99,7 @@
             (let [criterion (first criteria)]
               (recur (simple-selection survivors scores criterion)
                      (rest criteria))))))
+
 
 
 (defn salient-scores
@@ -84,6 +116,7 @@
         which))))
 
 
+
 (defn dominated-by?
   "Takes two Answer records, a Scores table, and a collection of Rubric record. Returns `true` if the second Answer (strictly) dominates the first on the scores specified by the rubrics. If any of the specified scores of either Answer is non-numeric (`nil` or `keyword`), it returns `false`."
   [a1 a2 scores rubrics]
@@ -97,10 +130,12 @@
                    (not-any? neg? delta))))))
 
 
+
 (defn filter-out-dominated
   "Takes a single Answer, a collection of Answer records, a Scores table, and a collection of Rubric records. Removes any Answer from the collection which is dominated by the first, based on the specified Rubrics"
   [answer answers scores rubrics]
   (remove #(dominated-by? % answer scores rubrics) answers))
+
 
 
 (defn nondominated
@@ -110,6 +145,7 @@
     (fn [survivors dude] (filter-out-dominated dude survivors scores rubrics))
     answers
     answers))
+
 
 
 (defn nondomination-sort

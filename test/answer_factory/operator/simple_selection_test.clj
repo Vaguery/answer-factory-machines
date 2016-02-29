@@ -33,6 +33,10 @@
     (throws #"No valid scores for rubric :id") )
 
 
+;;; simple-selection
+
+
+
 (fact "simple selection returns a vector of answers"
   (let [one-rubric (first fixtures/some-rubrics)]
     (type (simple-selection fixtures/some-guys fixtures/random-scores one-rubric)) =>
@@ -66,3 +70,43 @@
       (assoc-in missing-scores [0 :score] 999)
       one-rubric) => (vector (first fixtures/some-guys))
       ))
+
+
+;;; simple-cull
+
+
+(fact "simple-cull all Answers with the worst scores removed on the specified Rubric"
+  (let [scores  (fixtures/make-score-table [0 1 9
+                                            0 2 9
+                                            0 3 1
+                                            1 4 9
+                                            1 5 9])]
+  (simple-cull
+    fixtures/some-guys
+    scores
+    (first fixtures/some-rubrics)) => (take 3 fixtures/some-guys)
+  (simple-cull
+    fixtures/some-guys
+    scores
+    (second fixtures/some-rubrics)) => (take 4 fixtures/some-guys)
+  (simple-cull
+    fixtures/some-guys
+    scores
+    (last fixtures/some-rubrics)) => [(nth fixtures/some-guys 2)]))
+
+
+
+(fact "simple-cull does not remove non-numeric scoring items"
+  (let [scores  (fixtures/make-score-table [0 1 9
+                                            0 2 :whaaa?
+                                            0 3 1
+                                          nil 4 9
+                                            8 5 9])]
+  (simple-cull
+    fixtures/some-guys
+    scores
+    (first fixtures/some-rubrics)) => (take 4 fixtures/some-guys)
+  (simple-cull
+    fixtures/some-guys
+    scores
+    (last fixtures/some-rubrics)) => [(nth fixtures/some-guys 1) (nth fixtures/some-guys 2)]))
