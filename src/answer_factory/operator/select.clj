@@ -48,7 +48,7 @@
 
 
 (defn simple-selection
-  "Takes a collection of Answer records, a collection of Scores, and a single Rubric record. Returns all Answers which have the lowest score on the indicated rubric."
+  "Takes a collection of Answer records, a collection of Scores, and a single Rubric record. Returns ALL Answers which have the lowest score on the indicated rubric."
   [answers scores rubric]
   (let [useful-scores (numeric-only scores rubric)
         min-score     (apply min (map :score useful-scores))
@@ -58,7 +58,7 @@
 
 
 (defn lexicase-selection
-  "Takes a collection of Answer records, a collection of Scores, and a collection of Rubric records. NOTE: returns all answers which filter through; does not sample at the end."
+  "Takes a collection of Answer records, a collection of Scores, and a collection of Rubric records. NOTE: returns all answers which filter through; does not sample at the end!"
   [answers scores rubrics]
   (loop [survivors answers
          criteria (shuffle rubrics)]
@@ -70,53 +70,57 @@
                      (rest criteria))))))
 
 
-;; multiobjective selection
-
-
-(defn every-rubric
-  "returns a set of rubric keywords, which is the union of all the :score keys in every answer in the argument collection"
-  [answers]
-  (reduce
-    #(into %1 (keys (:scores %2)))
-    #{}
-    answers))
+(defn salient-scores
+  "takes one Answer record, a collection of Scores, and a collection of Rubric records, and returns a vector of the scores associated with those Rubrics, or nil if missing."
+  [answer scores rubrics]
+  (let [a        (:id answer)
+        which    (map :id rubrics)
+        salient  (filter #(= (:answer-id %) a) scores)]
+    (if (record? rubrics) ;; it's not in a collection
+      (throw (Exception. "salient-scores argument is not a collection of Rubric records"))
+      (reduce
+        (fn [v r] (conj v (:score (first (filter #(= r (:rubric-id %)) salient)))))
+        []
+        which))))
 
 
 (defn dominated-by?
-  "returns true if the second (answer) argument dominates the first; if a collection of rubrics is specified, that is used as the basis of comparison; otherwise, the union of the :scores keys of both answers are used; if any scores in either answer are nil, it returns false"
-  [a1 a2 & [rubrics]]
-  (let [k     (if rubrics
-                (seq rubrics)
-                (set (concat (keys (:scores a1)) (keys (:scores a2)))))
-        s1    (map (:scores a1) k)
-        s2    (map (:scores a2) k)
-        delta (map compare s1 s2)]
-    (and (not-any? nil? s1)
-         (not-any? nil? s2)
-         (and
-           (boolean (some pos? delta))
-           (not-any? neg? delta)))))
+  "Takes two Answer records, a Scores table, and a collection of Rubric record. Returns `true` if the second Answer (strictly) dominates the first on the scores specified by the rubrics. If any of the specified scores of either Answer is non-numeric (`nil` or `keyword`), it returns `false`."
+  [a1 a2 scores rubrics]
+  (let [scores1 (salient-scores a1 scores rubrics)
+        scores2 (salient-scores a2 scores rubrics)]
+    (cond
+      (not-every? number? scores1) false
+      (not-every? number? scores2) false
+      :else (let [delta (map compare scores1 scores2)]
+              (and (boolean (some pos? delta))
+                   (not-any? neg? delta))))))
 
 
-(defn remove-dominated
-  "takes an answer and a collection of answers, and removes from the latter all answers dominated by the first argument; if an optional rubrics collection is passed in, that is used for the basis of comparison"
-  [answer answers & [rubrics]]
-  (remove #(dominated-by? % answer rubrics) answers))
+(defn filter-out-dominated
+  "Takes a single Answer, a collection of Answer records, a Scores table, and a collection of Rubric records. Removes any Answer from the collection which is dominated by the first, based on the specified Rubrics"
+  [answer answers scores rubrics]
+  (remove #(dominated-by? % answer scores rubrics) answers))
 
 
 (defn nondominated
-  "takes a collection of answers; removes any that are dominated by any others; if _any_ answer in the entire collection has an extra score, or lacks a score the others have (or it has a nil value), then _all_ the answers are returned"
-  [answers & [rubrics]]
-  (let [universe    (every-rubric answers)
-        consistent? (every? #(= (set (keys (:scores %))) universe) answers)
-        covered?    (every? #(not-any? nil? (vals (:scores %))) answers)]
-    (if (and consistent? covered?)
-      (reduce
-        (fn [keep check] (remove-dominated check keep rubrics))
-        answers
-        answers)
-      answers)))
+  "Takes a collection of answers, scores and rubrics, and removes any that are dominated by any others on the specified rubrics. NOTE: If any score for a specified Rubric is non-numeric for ANY Answer, NO answers are removed!"
+  [answers scores rubrics]
+  (reduce
+    (fn [survivors dude] (filter-out-dominated dude survivors scores rubrics))
+    answers
+    answers))
 
 
-;; filtering a single VECTOR rubric
-
+(defn nondomination-sort
+  "Takes a collection of Answers, scores and Rubrics. Returns a vector of collections of Answers, with the first collection being the non-dominated ones, the next being the nondominated remainder, and so on until all Answers have been sorted."
+  [answers scores rubrics]
+  (loop [remainder answers
+         layers    [] ]
+    (if (empty? remainder)
+      layers
+      (let [best      (nondominated remainder scores rubrics)
+            best-ids  (map :id best)
+            less-best (remove #(some #{= (:id %)} best-ids) remainder)]
+        (recur less-best
+               (conj layers best))))))

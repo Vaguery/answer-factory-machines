@@ -22,90 +22,60 @@
   (simple-selection fixtures/some-guys fixtures/random-scores (first fixtures/some-rubrics)))
 
 
-(fact "lexicase-selection does no filtering if no rubrics are specified"
+(fact "lexicase-selection does no filtering at all if no rubrics are specified"
   (lexicase-selection
     fixtures/some-guys
     fixtures/random-scores
     (list)) => fixtures/some-guys)
 
 
-; (fact "lexicase-selection will return the answer with the best score in a single objective"
-;   (let [d1 (dude-with-scores {:x 1})
-;         d9 (dude-with-scores {:x 9})]
-;     (lexicase-selection [d1 d9] [:x]) => d1))
-
-
-; ;; remove nil-scored answers
-
-
-; (fact "purge-nils discards any entry which has a nil in any listed score"
-;   (let [d0 (dude-with-scores {:x 1 :y 1 :z nil})
-;         d1 (dude-with-scores {:x 1 :y 1 :z 2})
-;         d2 (dude-with-scores {:x 2 :y 2 :z 1})]
-;     (purge-nils [d0 d1 d2] [:x :y :z]) => (contains [d1 d2] :in-any-order)))
-
-
-; (fact "purge-nils discards any entry which has a nil score"
-;   (let [d0 (dude-with-scores {:x 1 :y 1 :z nil})
-;         d1 (dude-with-scores {:x 1 :y 1 :z 2})
-;         d2 (dude-with-scores {:x 2 :y 2 :z 1})]
-;     (purge-nils [d0 d1 d2] [:x :y :z :foo]) => []))
-
-
-; ;; filter-by-rubric
-
-
-; (fact "filter-by-rubric should return all the answers with the lowest score of the indicated rubric"
-;   (let [d1a (dude-with-scores {:x 1})
-;         d1b (dude-with-scores {:x 1})
-;         d9 (dude-with-scores {:x 9})]
-;     (filter-by-rubric [d1a d1b d9] :x) => (contains d1a d1b)))
+(fact "lexicase-selection will return the answer with the best score in a single objective"
+  (let [column1 (fixtures/make-score-table [1 1 1
+                                            1 1 1
+                                            0 1 1
+                                            1 1 1
+                                            1 1 1])]
+    (lexicase-selection
+      fixtures/some-guys
+      column1
+      fixtures/some-rubrics) => (list (nth fixtures/some-guys 2))))
 
 
 
-; (fact "filter-by-rubric does not return any answers where the score is nil for only the indicated rubric"
-;   (let [d1a (dude-with-scores {:x 1 :y nil})
-;         d1b (dude-with-scores {:x nil})
-;         d9 (dude-with-scores {:x 9})]
-;     (filter-by-rubric [d1a d1b d9] :x) => (contains d1a)))
+(fact "lexicase-selection will return several answers if there is no one with best scores"
+  (let [a-and-b (fixtures/make-score-table [0 0 1
+                                            1 1 1
+                                            0 0 1
+                                            1 1 1
+                                            1 1 1])]
+    (lexicase-selection
+      fixtures/some-guys
+      a-and-b
+      fixtures/some-rubrics) =>
+        (contains [(nth fixtures/some-guys 0) (nth fixtures/some-guys 2)])
+    (lexicase-selection
+      fixtures/some-guys
+      a-and-b
+      (drop 2 fixtures/some-rubrics)) => fixtures/some-guys))
+                                          ;; ^^ all of them
 
 
-; ;; lexicase selection
-
-
-; (fact "lexicase-selection returns the best choice when there is exactly one"
-;   (let [d9 (dude-with-scores {:x 9 :y 11})
-;         d1 (dude-with-scores {:x 1 :y  9})]
-;     (lexicase-selection [d1 d9] [:x :y]) => d1
-;     (lexicase-selection [d1 d9] [:y :x]) => d1))
-
-
-; (fact "lexicase-selection returns the best choice even when there are several paths to it"
-;   (let [d0 (dude-with-scores {:x 1 :y 1 :z 1})
-;         dz (dude-with-scores {:x 1 :y 1 :z 2})
-;         dx (dude-with-scores {:x 2 :y 1 :z 1})]
-;     (lexicase-selection [d0 dz dx] [:x :y :z]) => d0))
-
-
-; (fact "lexicase selection randomly samples after exhausting rubrics"
-;   (let [d0 (dude-with-scores {:x 1 :y 1 :z 1})
-;         d1 (dude-with-scores {:x 1 :y 1 :z 1})
-;         d2 (dude-with-scores {:x 1 :y 1 :z 1})]
-;     (lexicase-selection [d0 d1 d2] [:x :y :z]) => :proxy-result-of-rand-nth
-;     (provided
-;       (rand-nth [d0 d1 d2]) => :proxy-result-of-rand-nth))
-
-;   (let [d0 (dude-with-scores {:x 1 :y 1 :z 1})
-;         d1 (dude-with-scores {:x 1 :y 1 :z 1})
-;         d2 (dude-with-scores {:x 2 :y 1 :z 1})]
-;     (lexicase-selection [d0 d1 d2] [:x :y :z]) => :proxy-result-of-rand-nth
-;     (provided
-;       (rand-nth [d0 d1]) => :proxy-result-of-rand-nth)))
-
-
-; (fact "lexicase-selection discards any entry which has a nil score"
-;   (let [d0 (dude-with-scores {:x 1 :y 1 :z nil})
-;         d1 (dude-with-scores {:x 1 :y 1 :z 1})
-;         d2 (dude-with-scores {:x 2 :y 2 :z 1})]
-;     (lexicase-selection [d0 d1 d2] [:x :y :z]) => d1))
+(fact "lexicase-selection will filter out missing values"
+  (let [a-and-b (fixtures/make-score-table [0 0 :missing
+                                            1 1 1
+                                            0 0 1
+                                            1 1 1
+                                            1 1 1])]
+    (lexicase-selection
+      fixtures/some-guys
+      a-and-b
+      fixtures/some-rubrics) => (list (nth fixtures/some-guys 2))
+    (lexicase-selection
+      fixtures/some-guys
+      a-and-b
+      (drop 2 fixtures/some-rubrics)) => (drop 1 fixtures/some-guys)
+    (lexicase-selection
+      fixtures/some-guys
+      a-and-b
+      (take 2 fixtures/some-rubrics)) => (map #(nth fixtures/some-guys %) '(0 2))))
 
