@@ -2,6 +2,12 @@
 
 A platform for generative programming.
 
+### Status
+
+Not working. Loads of debugging `println` and bad ideas showing.
+
+But soon!
+
 ### Design goals
 
 Most Genetic Programming platforms depend on very tight coupling between the _representation language_ (used to express potential solutions to one's problem of interest) with the _search language_ that implements the process of search _among_ those potential solutions. Here I'm attempting to explicitly divorce search dynamics and the comparison of potential solutions' behavior from their intrinsic structure.
@@ -39,9 +45,7 @@ This is still in early development. The first release will support single-machin
 - various mutation and crossover operators
 
 
-### Status
 
-Not working.
 
 ### Contributing
 
