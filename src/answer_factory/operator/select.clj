@@ -156,7 +156,7 @@
 
 
 (defn nondominated-selection
-  "Takes a collection of answers, scores and rubrics, and removes any that are dominated by any others on the specified rubrics. NOTE: If any score for a specified Rubric is non-numeric for ANY Answer, NO answers are removed!"
+  "Takes a collection of answers, scores and rubrics, and removes any that are dominated by any others on the specified rubrics. NOTE: Answers with non-numeric scores (including `nil`) are NEVER removed! This can have unexpected consequences."
   [answers scores rubrics]
   (reduce
     (fn [survivors dude] (filter-out-dominated dude survivors scores rubrics))
