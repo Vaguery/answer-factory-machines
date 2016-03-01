@@ -189,3 +189,19 @@
       (let [loser-ids (map :id (last sorted))]
         (remove #(some #{(:id %)} loser-ids) answers)))))
 
+
+
+(defn remove-uncooperative
+  "Takes collections of answers, scores and rubrics, and removes any answer for which any score is non-numeric for any of the specified rubrics."
+  [answers scores rubrics]
+  (remove 
+    #(some (complement number?) (salient-scores % scores rubrics))
+    answers))
+
+
+(defn select-on-nil
+  "Takes collections of answers, scores and rubrics, and returns only thoe answers where some score is `nil`."
+  [answers scores rubrics]
+  (filter 
+    #(some nil? (salient-scores % scores rubrics))
+    answers))
