@@ -6,7 +6,7 @@ A platform for generative programming.
 
 Most Genetic Programming platforms depend on very tight coupling between the _representation language_ (used to express potential solutions to one's problem of interest) with the _search language_ that implements the process of search _among_ those potential solutions. Here I'm attempting to explicitly divorce search dynamics and the comparison of potential solutions' behavior from their intrinsic structure.
 
-I've started with ([a new implementation of](https://github.com/Vaguery/push-in-clojure)) Lee Spector's Push language as a default; it's qualitatively unlike most tree-based GP representations, far more expressive and extensible. Eventually I expect to include support for arbitrary representation schemes, including Cartesian GP, Grammatical Evolution and other less well-known approaches that have many strengths but which are harder to find in usable (and interoperable) implementations.
+I've started with \([a new implementation of](https://github.com/Vaguery/klapaucius)\) Lee Spector's Push language as a default. Push is qualitatively unlike most tree-based GP representations people are familiar with: quite a bit more expressive and extensible. Eventually I plan on including support for arbitrary representation schemes, including Cartesian GP, Grammatical Evolution and other less well-known approaches that have many strengths but which are harder to find in usable (and interoperable) implementations.
 
 Even beyond this tendency for representational lock-in, most extant genetic programming systems hard-code the outdated "biologically inspired" model of crossover-and-mutation search, usually based on decades-old sketches which the active research field has for the most part abandoned. "Genetic" programming has for many years invoked a far more diverse suite of complex search operators, heuristics and design patterns that have little to do with biological dynamics, in service of actually finding interesting solutions to problems and of addressing the formal structure of practical problem-solving. Most diagrams of "programs" as DNA-like lines (or S-expression trees) that are cut and then crossed over fall short of what actually happens in effective modern GP systems, which can use hill-climbing, other machine learning algorithms, and modern statistical methods in support of discovery.
 
@@ -22,19 +22,30 @@ GP (whether you think of it as "genetic programming" or "generative" as I prefer
 
 ### Status
 
-Preliminary work only so far. [An earlier Ruby-based system](https://github.com/Vaguery/Answer-Factory) is the inspiration, but this Clojure-and-Javascript thing is being designed for modern cloud systems.
+This is still in early development. The first release will support single-machine searches only, though it will use a local database for long-term and large-scale storage. But because of Clojure's strong support for distributed and asynchronous programming, a distributed workers-and-work-queue version will follow shortly thereafter.
 
-### Plan
+#### Working
 
-- re-implement [Plush genomes (from Clojush)](https://github.com/lspector/Clojush), just-the-program genomes and BB8 schemes as representations for [Push](https://github.com/Vaguery/push-in-clojure) programs
-- Simple single-machine population-based GP algorithms with [Push](https://github.com/Vaguery/push-in-clojure), in support of colleagues using [Clojush](https://github.com/lspector/Clojush) for active research projects
-- Distributed cloud-based version
-- Interactivity with long-term searches
-- [more here]
+- two genome types for Push programs, `plush` (from Lee Spector's lab) and `bb8` \(a new representation scheme relying on Clojure's [`zipper` library](https://clojure.github.io/clojure/clojure.zip-api.html)\)
+- selection operators for
+  - `uniform-selection` pick one randomly sampled `Answer` from a collection
+  - `uniform-cull` remove one randomly sampled `Answer` from a collection
+  - `simple-selection` return all the best-scoring `Answer`s from a collection, given a specified `Rubric`
+  - `simple-cull` remove all the worst-scoring `Answer`s from a collection, given a specified `Rubric`
+  - `lexicase-selection` randomly permute a collection of `Rubric`s, and recursively retain the best-scoring `Answers` on each one (selectedin turn). For example, if the `Rubric`s are numbered `[1 2 3]`, it might randomly permute these to `[3 1 2]`; the resulting subset of `Answer`s are obtained by selecting the best at `Rubric` 3, then the subset of those best at `Rubric` 1, then the subset of _those_ best at `Rubric` 2.
+  - `lexicase-cull` removes the "winners" of `lexicase-selection` applied to _negated_ scores: every numerical score is negated, and `lexicase-selection` is applied to determine which `Answer`s to _remove_ from the collection
+  - `nondominated-selection` removes all `Answer`s from the collection which are _strongly dominated_ by any other, using [Pareto domination](https://en.wikipedia.org/wiki/Multi-objective_optimization#Introduction) over the specified set of `Rubric`s. One `Answer` dominates another if all of its comparable scores are _at least as good_, and at least one is better.
+  - `most-dominated-cull` over a collection of `Answer`s recursively removes _non-dominated_ `Answers` until no dominated ones remain. It then removes those "most dominated" ones from the original collection.
+- various mutation and crossover operators
+
+
+### Status
+
+Not working.
 
 ### Contributing
 
-Nothing for the moment.
+Nothing for the moment. Comments are welcome.
 
 
 ## Testing

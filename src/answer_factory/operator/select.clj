@@ -7,8 +7,8 @@
 ;; The Rubrics table contain information about running and evaluating programs only.
 ;; The Scores table contain all info about scores obtained when applying a Rubric to an Answer
 ;;
-;; Thus, for consistency all selection operators are built to take TWO arguments: a collection of Answer records, and a collection of Score records.
-
+;; In many of these functions, what is passed in is either a collection of records
+;; or a single record from one or more of these tables.
 
 
 (defn uniform-selection
