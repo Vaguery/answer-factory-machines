@@ -74,5 +74,4 @@
   (provided 
     (rand-int 10) => 9                 ;; 12345
     (rand) =streams=> (cycle [0 1]))   ;; -----abcd
-
   )

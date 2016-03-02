@@ -5,7 +5,14 @@
 ;; genome-agnostic
 
 
-(defn one-point-uneven-crossover
+(defn pad-with-nil
+  "Takes a genome and a number, and returns a revised genome with the indicated number of `nil` values padded at the front"
+  [genome padding]
+  (into [] (concat (repeat padding nil) genome)))
+
+
+
+(defn one-point-crossover
   "Takes two genomes (not Answer records). Selects cut-points in each uniformly and independently, and produces _two_ offspring obtained by swapping ends at those points. NOTE: does not check the genomes are the same representation!"
   [mom dad]
   (let [cut-m (rand-int (inc (count mom)))
@@ -42,6 +49,8 @@
              (safe-conj kid2 (first (if swap? mom-bits dad-bits)))))))
 
 
+;; "unaligned" variations:
+;;
 ;; abcde     -5
 ;;      123
 ;; abcde     -4
@@ -62,10 +71,18 @@
 ;; 123
 
 
-(defn pad-with-nil
-  "Takes a genome and a number, and returns a revised genome with the indicated number of `nil` values padded at the front"
-  [genome padding]
-  (into [] (concat (repeat padding nil) genome)))
+(defn unaligned-one-point-crossover
+  "Takes two genomes (not Answer records). First the two genomes are aligned randomly, selecting an alignment offset for `dad` somewhere in the range including `(- (count dad))` and `(count mom)`. For example, if `mom` is `123` and dad `abcde`, the possible alignments range from `abcde123` to `123abcde`, inclusive. After filling missing space with `nil` placeholders, one-point-crossover is applied."
+  [mom dad]
+  (let [mom-count (count mom)
+        dad-count (count dad)
+        alignment (- (rand-int (+ mom-count dad-count 1)) dad-count)]
+    (into []
+      (map (partial remove nil?)
+        (if (neg? alignment)
+          (one-point-crossover (pad-with-nil mom (- alignment)) dad)
+          (one-point-crossover mom (pad-with-nil dad alignment))
+      )))))
 
 
 (defn unaligned-uniform-crossover
