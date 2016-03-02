@@ -93,23 +93,32 @@
 
 
 (fact "L1-distance-from-top-result"
-  (L1-distance-from-top-result {:y 8} {:y '(1 7 121)} :missing) => 7.0
-  (L1-distance-from-top-result {:y 8} {:y '(13 7 121)} :missing) => 5.0
-  (L1-distance-from-top-result {:y 8} {:y '(8 7 121)} :missing) => 0.0
-  (L1-distance-from-top-result {:y 8} {:y '()} :missing) => :missing
-  (L1-distance-from-top-result {:y 8} {:y '()} 100000000.0) => 100000000.0
-  (L1-distance-from-top-result {:y 8} {:x '(2)} :missing) => :missing
+  (L1-distance-from-top-result {:y 8} {:y '(1 7 121)} :missing) => {:y 7.0}
+  (L1-distance-from-top-result {:y 8} {:y '(13 7 121)} :missing) => {:y 5.0}
+  (L1-distance-from-top-result {:y 8} {:y '(8 7 121)} :missing) => {:y 0.0}
+  (L1-distance-from-top-result {:y 8} {:y '()} :missing) => {:y :missing}
+  (L1-distance-from-top-result {:y 8} {:y '()} 100000000.0) => {:y 100000000.0}
+  (L1-distance-from-top-result {:y 8} {:x '(2)} :missing) => {:y :missing}
   
-  (L1-distance-from-top-result {:y false} {:y '(false)} :missing) => 0.0
-  (L1-distance-from-top-result {:y false} {:y '(true)} :missing) => 1.0
-  (L1-distance-from-top-result {:y false} {:y '()} :missing) => :missing
-  (L1-distance-from-top-result {:y false} {:x '(3)} :missing) => :missing
+  (L1-distance-from-top-result {:y false} {:y '(false)} :missing) => {:y 0.0}
+  (L1-distance-from-top-result {:y false} {:y '(true)} :missing) => {:y 1.0}
+  (L1-distance-from-top-result {:y false} {:y '()} :missing) => {:y :missing}
+  (L1-distance-from-top-result {:y false} {:x '(3)} :missing) => {:y :missing}
   
-  (L1-distance-from-top-result {:y :foo} {:y '(:foo)} :missing) => 0.0
-  (L1-distance-from-top-result {:y :foo} {:y '(:bar)} :missing) => 1.0
-  (L1-distance-from-top-result {:y :foo} {:y '()} :missing) => :missing
-  (L1-distance-from-top-result {:y :foo} {:x '(:foo)} :missing) => :missing
+  (L1-distance-from-top-result {:y :foo} {:y '(:foo)} :missing) => {:y 0.0}
+  (L1-distance-from-top-result {:y :foo} {:y '(:bar)} :missing) => {:y 1.0}
+  (L1-distance-from-top-result {:y :foo} {:y '()} :missing) => {:y :missing}
+  (L1-distance-from-top-result {:y :foo} {:x '(:foo)} :missing) => {:y :missing}
   )
+
+(fact "L1-distance-from-top-result handling multiple items"
+
+  (L1-distance-from-top-result {:z1 [88 99]} {:z1 '([62 7])} :missing) => {:z1 1.0}
+
+  (L1-distance-from-top-result {:z1 1 :z2 2} {:z1 '(7) :z2 '(8)} :missing) => {:z1 6 :z2 6}
+
+)
+
 
 ;; 
 ;; score an Answer using a single ErrorRubric:
@@ -154,8 +163,8 @@
     
     (:program a1) => [:x :integer-dup 2 :integer-subtract :integer-add 1 4]
 
-    (score-answer a1 r :missing) => 3.0
-    (score-answer a2 r :missing) => :missing))
+    (score-answer a1 r :missing) => {:integer 3.0}
+    (score-answer a2 r :missing) => {:integer :missing}))
 
 
 ;; score an Answer using a single StructuralRubric:

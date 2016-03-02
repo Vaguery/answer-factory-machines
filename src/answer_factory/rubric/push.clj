@@ -85,18 +85,21 @@
 (defrecord ErrorRubric [id testcase score-fn])
 
 
+
+
+
 (defn L1-distance-from-top-result
-  "Compares the expected result to the top item on the indicated result stack, returning the absolute deviation; if it is missing, `missing-value` is returned instead. If expected-hash includes multiple items, they are all returned. If any items a non-numeric types, 0.0 is returned if they are equal, 1.0 otherwise."
+  "Compares the expected result to the top item on the indicated result stack, returning a hash-map with the same keys and the absolute deviation as its value. If a key or value is missing from the `results-hash`, `missing-value` is returned instead. If any values are non-numeric in the `expected-hash`, a _match error_ is returned instead: 0.0 if they are equal, 1.0 otherwise."
   [expected-hash results-hash missing-value]
   (let [k      (first (keys expected-hash))
         target (k expected-hash)
         guess  (first (k results-hash))]
     (if (nil? guess)
-      missing-value
-      (if (number? guess)
-        (double (math/abs (-' target guess)))
-        (if (= target guess) 0.0 1.0)
-        ))))
+      {k missing-value}
+      {k (if (number? guess)
+            (double (math/abs (-' target guess)))
+            (if (= target guess) 0.0 1.0))}
+      )))
 
 
 (defn error-rubric
