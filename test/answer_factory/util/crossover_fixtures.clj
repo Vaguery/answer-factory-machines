@@ -8,20 +8,20 @@
 
 
 (def bb8-1
-  [{:from :prev, :put :R, :item 1}      
-   {:from :down, :put :R, :item 2}      
-   {:from :append, :put :L, :item 3}    
-   {:from :left, :put :R, :item 4}      
-   {:from :up, :put :L, :item 5}        
-   {:from :right, :put :R, :item 6}])   ;; [5 1 3 6 4 2]
+  [{:from :up, :put :R, :item 1}      
+   {:from :up, :put :R, :item 2}      
+   {:from :up, :put :R, :item 3}    
+   {:from :up, :put :R, :item 4}      
+   {:from :up, :put :R, :item 5}        
+   {:from :up, :put :R, :item 6}]) 
 
 
 (def bb8-2
-  [{:from :prev, :put :R, :item :a}     
-   {:from :down, :put :R, :item :b}     
-   {:from :append, :put :L, :item :c}   
-   {:from :left, :put :R, :item :d}     
-   {:from :up, :put :L, :item :e}])  ;; [:e :a :c :d :b]
+  [{:from :down, :put :L, :item :a}     
+   {:from :down, :put :L, :item :b}     
+   {:from :down, :put :L, :item :c}   
+   {:from :down, :put :L, :item :d}     
+   {:from :down, :put :L, :item :e}]) 
 
 
 (def plush-1
