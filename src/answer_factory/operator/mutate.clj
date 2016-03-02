@@ -4,6 +4,7 @@
 
 ;; genome-agnostic
 
+
 (defn mutate-gene-item
   "takes a Plush gene map, a probability of change, and a list of replacement items; returns the modified gene with the indicated probability, sampling uniformly from the list"
   [gene prob item-source]

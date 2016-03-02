@@ -2,8 +2,7 @@
   (:use midje.sweet)
   (:use answer-factory.answer.push)
   (:require [answer-factory.util.selection-fixtures :as fixtures])
-  (:use answer-factory.operator.select)
-  (:use answer-factory.util.test))
+  (:use answer-factory.operator.select))
 
 
 
