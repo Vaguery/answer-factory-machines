@@ -96,8 +96,7 @@
         alignment (- (rand-int (+ mom-count dad-count 1)) dad-count)]
     (if (neg? alignment)
       (uniform-crossover (pad-with-nil mom (- alignment)) dad)
-      (uniform-crossover mom (pad-with-nil dad alignment))
-      )))
+      (uniform-crossover mom (pad-with-nil dad alignment)))))
 
 
 ;; representation-specific
@@ -131,8 +130,7 @@
                (rest dad-bits)
                (if (< 0.5 (rand)) false true)
                (safe-conj kid1 (first (swap-values mom-next dad-next kw)))
-               (safe-conj kid2 (second (swap-values mom-next dad-next kw)))
-            )))))
+               (safe-conj kid2 (second (swap-values mom-next dad-next kw))))))))
   
 
 (defn unaligned-uniform-value-exchange
@@ -143,5 +141,4 @@
         alignment (- (rand-int (+ mom-count dad-count 1)) dad-count)]
     (if (neg? alignment)
       (uniform-value-exchange (pad-with-nil mom (- alignment)) dad kw)
-      (uniform-value-exchange mom (pad-with-nil dad alignment) kw)
-      )))
+      (uniform-value-exchange mom (pad-with-nil dad alignment) kw))))
