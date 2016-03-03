@@ -117,9 +117,9 @@
 
 
 (defn bb8-guess
-  "Takes a collection of one or more `item-guess` generators (vectors or functions). Returns a single bb8 gene in which the `:from` is selected from the (non-integer) directives, and where the `:put` is selected from `[:L :R]` uniformly."
-  [items]
-  {:item   (apply item-guess items)
+  "Takes a hashmap with one or more `item-guess` generators (vectors or functions) as keys, and non-negative numbers as values. Returns a single bb8 gene in which the `:from` is selected from the (non-integer) directives, and where the `:put` is selected from `[:L :R]` uniformly."
+  [item-hash]
+  {:item   (weighted-item-guess item-hash)
    :from   (rand-nth [:head :tail :subhead :append :left :right :prev :next :up :down])    
-   :put (rand-nth [:L :R])})
+   :put    (rand-nth [:L :R])})
 

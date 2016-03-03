@@ -92,11 +92,12 @@
 
 
 (fact "item-guess works with functions and vectors"
-    (item-guess somefn1 ) => 77
+  (let [foo (fn [] (+ 55 20 2))]
+    (item-guess foo ) => 77
     (item-guess (fn [] constantly 77)
                 (fn [] (+ 33 44))
                 #(* 11 7)
-                [77 77 770/10]) => 77)
+                [77 77 770/10]) => 77))
 
 
 ;;; weighted-item-guess
@@ -121,11 +122,13 @@
 
 
 (fact "weighted-item-guess works with functions and vectors"
-    (weighted-item-guess {somefn1 8}) => 77
+  (let [foo (fn [] (+ 55 20 2))]
+
+    (weighted-item-guess {foo 8}) => 77
     (weighted-item-guess {(fn [] constantly 77)   20
                           (fn [] (+ 33 44))       30
                           #(* 11 7)               40
-                          [77 77 770/10]          10}) => 77)
+                          [77 77 770/10]          10}) => 77))
 
 
 
@@ -147,6 +150,7 @@
                [8]
                0.0) => {:close 0, :item 1, :silent false})
 
+
 ;;; constructing random plush genes from scratch
 
 
@@ -156,7 +160,7 @@
       { #(boolean-guess)                   20
         #(integer-guess 100)               10
         #(tidy-float-guess 100 8)          10
-        #(char-guess :ascii)               1
+        #(char-guess :ascii-chars)               1
         #(string-guess :ascii-chars 40)    1
         #(ref-guess target)                30
         #(instruction-guess target)        80
@@ -171,9 +175,25 @@
 
 
 (fact "bb8-guess produces a bb8 gene"
-  (:item (bb8-guess [[1]])) => 1
-  [:L :R] => (contains (:put (bb8-guess [[1]])) )
+  (:item (bb8-guess {[1] 99})) => 1
+  [:L :R] => (contains (:put (bb8-guess {[1] 99})))
   [:head :tail :subhead :append :left :right :prev :next :up :down] =>
-    (contains (:from (bb8-guess [[1]]))))
+    (contains (:from (bb8-guess {[1] 99}))))
 
 
+
+;;; constructing random bb8 genes from scratch
+
+
+(fact "it all fits together without breaking"
+  (let [target (push/interpreter :bindings {:x1 8 :x2 8 :x3 8})]
+    (bb8-guess
+      { #(boolean-guess)                   20
+        #(integer-guess 100)               10
+        #(tidy-float-guess 100 8)          10
+        #(char-guess :ascii-chars)         10.5
+        #(string-guess :ascii-chars 40)    10
+        #(ref-guess target)                30
+        #(instruction-guess target)        30
+      })  =not=> (throws)      ;; examine this to see what we're getting
+  ))
