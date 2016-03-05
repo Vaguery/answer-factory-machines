@@ -77,7 +77,7 @@
 
 
 (defn simple-cull
-  "Takes a collection of Answer records, a collection of Scores, and a single Rubric record. Removes ALL Answers which have the largest score on the indicated rubric."
+  "Takes a collection of Answer records, a collection of Scores, and a single Rubric record. Removes ALL Answers which have the largest score on the indicated rubric. Can produce an empty result?"
   [answers scores rubric]
   (let [useful-scores (numeric-only scores rubric)
         max-score     (apply max (map :score useful-scores))
@@ -205,3 +205,4 @@
   (filter 
     #(some nil? (salient-scores % scores rubrics))
     answers))
+

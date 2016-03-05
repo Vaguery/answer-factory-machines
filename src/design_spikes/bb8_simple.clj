@@ -13,144 +13,17 @@
   (:require [clj-time.local :as t])
   (:require [clojure.math.numeric-tower :as math])
   (:require [answer-factory.rubric.push :as rubric])
+  (:require [answer-factory.operator.guess :as guess])
   )
 
 
 ;; fixtures
 
 
-(def all-moves
-  [ :head :tail :subhead :append :left :right
-    :prev :next #(rand-int 1000)])
-
-
-(def all-puts [:L :R])
-
-
-(def my-interpreter (p/interpreter :bindings {:a 8 :b 9}))
+(def x-runner (p/interpreter :bindings {:x 12 :y 18}))
 
 
 ;; some random code generators
-
-
-(defn random-instruction
-  [interpreter]
-  (p/known-instructions interpreter))
-
-
-(fact :spike
-  (p/known-instructions (p/interpreter)) => (contains :integer-subtract))
-
-
-(defn random-binding
-  [interpreter]
-  (p/binding-names interpreter))
-
-
-(fact :spike
-  (p/binding-names (p/interpreter :bindings {:a 8 :b 9})) => [:a :b] )
-
-
-(defn random-literal
-  []
-  (condp = (rand-int 10)
-    0 true 
-    1 (* 10.0 (rand))
-    3 false
-    (rand-int 10)
-    ))
-
-
-(defn random-item
-  [interpreter branch-prob]
-  (if (< (rand) branch-prob)
-    '()
-    (if (< (rand) 0.01)
-      (random-literal)
-      (rand-nth (concat (p/known-instructions interpreter)
-                        (p/binding-names interpreter))))))
-
-
-(defn any-move
-  []
-  (let [f (rand-nth all-moves)] (if (fn? f) (f) f)))
-
-
-(defn random-gene
-  [interpreter prob]
-  { :from (any-move)
-    :put (rand-nth all-puts)
-    :item (random-item interpreter prob)})
-
-
-(defn random-genome
-  [interpreter prob size]
-  (into [] (repeatedly size #(random-gene interpreter prob))))
-
-
-(def dude-x (random-genome (p/interpreter :bindings {:a 8 :b 11}) 0.1 10 ))
-(def dude-y (random-genome (p/interpreter :bindings {:a 8 :b 11}) 0.1 20 ))
-
-
-(defn point-crossover
-  [mom dad]
-  (into [] (concat
-
-      (take (max (rand-int (count mom)) 1) mom)
-      (drop (min (rand-int (count dad)) (dec (count dad))) dad))))
-
-
-(fact "point-crossover does a thing" :spike
-  (first (point-crossover dude-x dude-y)) => (first dude-x)
-  (last (point-crossover dude-x dude-y)) => (last dude-y)
-  (> (+ (count dude-x) (count dude-y))
-    (count (point-crossover dude-x dude-y))) => true
-  )
-
-
-(defn uniform-crossover
-  [mom dad]
-  (map
-    #(if (< (rand) 0.5)
-      (nth mom %)
-      (nth dad %))
-    (range 0 (count mom))))
-
-
-(fact "uniform-crossover does a thing" :spike
-  (count (uniform-crossover dude-x dude-y)) => (count dude-x)
-  (concat dude-x dude-y) => (contains (uniform-crossover dude-x dude-y) :gaps-ok :in-any-order))
-
-
-
-(defn item-mutate
-  [genome interpreter prob]
-  (assoc-in
-    genome 
-    [(rand-int (count genome)) :item]
-    (random-item interpreter prob)))
-
-
-(fact "mutation does a thing" :spike
-  (map :item (item-mutate dude-x (p/interpreter :bindings {:a 8 :b 9}) 0.1)) =not=>
-    (map :item dude-x))
-
-
-(defn gene-mutate
-  [genome interpreter prob]
-  (assoc
-    genome 
-    (rand-int (count genome))
-    (random-gene interpreter prob)))
-
-
-(fact "mutation does a thing" :spike
-  (bb8->push (gene-mutate dude-x (p/interpreter :bindings {:a 8 :b 9}) 0.1)) =not=> 
-  (bb8->push dude-x))
-
-
-
-(def x-runner (p/interpreter :bindings {:a 8 :b 9}))
 
 
 (defn run-over-input-range
@@ -214,7 +87,17 @@
 (def random-pop
   (repeatedly 100
     (fn [] (genome->sql
-      (random-genome (p/interpreter :bindings {:a 1 :b 11}) 0.1 10)))))
+      (guess/bb8-genome-guess
+        10
+        { #(guess/boolean-guess)                   20
+          #(guess/integer-guess 100)               10
+          #(guess/tidy-float-guess 100 8)          10
+          #(guess/char-guess :ascii-chars)         10.5
+          #(guess/string-guess :ascii-chars 40)    10
+          #(guess/ref-guess x-runner)              30
+          #(guess/instruction-guess x-runner)      30
+        })))))
+
 
 
 (fact "I can write answers" :spike
@@ -224,9 +107,9 @@
       (first r) => {(keyword "count(id)") 100})))
 
 
-;; rubrics
+; ;; rubrics
 
-;; let's do y=a+6
+; ;; let's do y=a+6
 
 
 (defn simple-training-set
@@ -245,5 +128,4 @@
   [ [{:x1 8 :x2 12} {:y 200}]
     [{:x1 3 :x2 11} {:y 140}]
     [{:x1 18 :x2 2} {:y 200}] ]
-  ))
-)
+  )))

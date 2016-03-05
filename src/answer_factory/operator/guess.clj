@@ -120,6 +120,26 @@
   "Takes a hashmap with one or more `item-guess` generators (vectors or functions) as keys, and non-negative numbers as values. Returns a single bb8 gene in which the `:from` is selected from the (non-integer) directives, and where the `:put` is selected from `[:L :R]` uniformly."
   [item-hash]
   {:item   (weighted-item-guess item-hash)
-   :from   (rand-nth [:head :tail :subhead :append :left :right :prev :next :up :down])    
+   :from   (if (< (rand) 1/20)
+              (rand-int 1000)
+              (rand-nth [:head :tail :subhead :append :left :right :prev :next :up :down]))    
    :put    (rand-nth [:L :R])})
+
+
+
+(defn bb8-indexed-guess
+  "Takes a hashmap with one or more `item-guess` generators (vectors or functions) as keys, and non-negative numbers as values. Returns a single bb8 gene in which the `:from` is selected from the (non-integer) directives, and where the `:put` is a random integer from 1-1000."
+  [item-hash]
+  {:item   (weighted-item-guess item-hash)
+   :from   (rand-int 1000)    
+   :put    (rand-nth [:L :R])})
+
+
+
+(defn bb8-genome-guess
+  "Takes a number of elements and an item hash. Returns a genome of exactly the specified number of bb8 genes."
+  [size item-hash]
+  (into [] (repeatedly size #(bb8-guess item-hash))))
+
+
 

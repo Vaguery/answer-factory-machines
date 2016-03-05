@@ -19,7 +19,7 @@
     (some neg? weights)
       (throw (Exception. "discrete-sample weights must all be positive numbers"))
     :else
-      (let [total   (float (reduce + weights))
+      (let [total   (double (reduce + weights))
             cutoffs (map #(/ % total) (reductions + weights))
             sample  (rand)
             which   (count (filter #(> sample %) cutoffs))]

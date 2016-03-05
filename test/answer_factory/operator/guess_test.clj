@@ -90,6 +90,8 @@
 (fact "item-guess works with multiple vectors"
   [1 :a] => (contains (item-guess [1] [:a])))
 
+(future-fact "item-guess throws an error when a vector is empty")
+
 
 (fact "item-guess works with functions and vectors"
   (let [foo (fn [] (+ 55 20 2))]
@@ -146,7 +148,7 @@
 
   (plush-guess {(fn [] (- 5 4))   10
                 (fn [] (* -1 -1)) 10
-                [1 3/3]    10}
+                [1 3/3]           10}
                [8]
                0.0) => {:close 0, :item 1, :silent false})
 
@@ -160,14 +162,14 @@
       { #(boolean-guess)                   20
         #(integer-guess 100)               10
         #(tidy-float-guess 100 8)          10
-        #(char-guess :ascii-chars)               1
+        #(char-guess :ascii-chars)         1
         #(string-guess :ascii-chars 40)    1
         #(ref-guess target)                30
         #(instruction-guess target)        80
       }
       [88 44 13 2]
       0.05
-      ) =not=> (throws)      ;; examine this to see what we're getting
+      )  =not=> (throws)      ;; examine this to see what we're getting
   ))
 
 
@@ -197,3 +199,35 @@
         #(instruction-guess target)        30
       })  =not=> (throws)      ;; examine this to see what we're getting
   ))
+
+
+(fact "bb8-indexed-guess works"
+  (let [target (push/interpreter :bindings {:x1 8 :x2 8 :x3 8})]
+    (bb8-indexed-guess
+      { #(boolean-guess)                   20
+        #(integer-guess 100)               10
+        #(tidy-float-guess 100 8)          10
+        #(char-guess :ascii-chars)         10.5
+        #(string-guess :ascii-chars 40)    10
+        #(ref-guess target)                30
+        #(instruction-guess target)        30
+      }) =not=> (throws)      ;; examine this to see what we're getting
+  ))
+
+
+;;; bb8-genome-guess
+
+(fact "bb8-genome-guess"
+  (let [target (push/interpreter :bindings {:x1 8 :x2 8 :x3 8})
+        random-bb8 (bb8-genome-guess
+                      10
+                      { #(boolean-guess)                   20
+                        #(integer-guess 100)               10
+                        #(tidy-float-guess 100 8)          10
+                        #(char-guess :ascii-chars)         10.5
+                        #(string-guess :ascii-chars 40)    10
+                        #(ref-guess target)                30
+                        #(instruction-guess target)        30
+                      })]
+    (count random-bb8) => 10
+))
