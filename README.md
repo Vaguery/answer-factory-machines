@@ -90,7 +90,7 @@ When no `:branch-map` is specified, the _default_ `:open` value for every item i
 
 #### Some examples might be good
 
-I've included some explicit examples in the form of runnable [Midje `facts`](https://github.com/marick/Midje/wiki/Facts), which show explicit examples of all this behavior.
+I've included some explicit examples in the form of runnable [Midje `facts`](https://github.com/Vaguery/answer-factory-clj/blob/master/test/answer_factory/genome/plush_test.clj#L540-L666), which show explicit examples of all this behavior. 
 
 ### `bb8` genomes
 
