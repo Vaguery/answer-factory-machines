@@ -30,6 +30,7 @@
 
 (fact "make-pushanswer knows about plush genomes"
   (:program (make-pushanswer [] :plush)) => []
-  (:program (make-pushanswer [{:item :code-quote :close 0}{:item 1 :close 8}] :plush)) => 
+  (:program (make-pushanswer [{:item :code-quote :close 0}{:item 1 :close 8}] :plush
+    :branch-map answer-factory.genome.plush/derived-push-branch-map)) => 
     '[:code-quote (1)]
   )

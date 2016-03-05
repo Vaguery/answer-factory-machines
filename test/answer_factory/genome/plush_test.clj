@@ -59,6 +59,11 @@
   (zip/root (first tree-vector)))
 
 
+(defn tree-vector-helper
+  [tree-vector]
+  [(zip/root (first tree-vector)) (second tree-vector)])
+
+
 (fact "move-up-safely works as intended"
   (zip/node little-tree) => 99
   (zip/node (move-up-safely little-tree)) => '(99)
@@ -184,64 +189,42 @@
       '(1 2 (3 4 (99)) ()))
 
 
-;; noop_delete_prev_paren_pair
+;; lift-branch
+
+(fact "lift-branch moves only the current cursor position"
+  (zip/root little-tree) => '(1 2 (3 4 (99))) ;; cursor was at «99»
+  (zip/root (lift-branch little-tree)) => '(1 2 (3 4 (99))) ;; cursor is was «99»
+  (zip/root (lift-branch (zip/prev little-tree))) => '(1 2 (3 4 99)) ;; cursor was at «(99)»
+  (zip/root (lift-branch (-> little-tree zip/up zip/up))) =>
+    '(1 2 3 4 (99)) ;; cursor was at «(3 4 (99))»
+  (zip/root (lift-branch (-> little-tree zip/up zip/up zip/left))) =>
+    '(1 2 (3 4 (99))) ;; cursor was at «2»
+    )
 
 
-(fact "last-closed-block moves the cursor accordingly, after inserting a :PLACEHOLDER"
-  (zip/node (last-closed-block little-tree)) => '(3 4 (99 :PLACEHOLDER))
+;; delete-prev-paren-pair
 
-  (zip/node (last-closed-block
-    (bb8/fast-forward (zip/seq-zip '(1 2 3 4 (5) 6 7 8 (9)))))) => '(5)
-  (zip/root (last-closed-block
-    (bb8/fast-forward (zip/seq-zip '(1 2 3 4 (5) 6 7 8 (9)))))) =>
-      '(1 2 3 4 (5) 6 7 8 (9 :PLACEHOLDER))
+(fact "delete-prev-paren-pair leaves the cursor in the last position but one"
+  (delete-prev-paren-pair (zip/seq-zip '())) => (bb8/fast-forward (zip/seq-zip '()))
+  (delete-prev-paren-pair (zip/seq-zip '(1 2 3 ()))) =>
+    (bb8/fast-forward (zip/seq-zip '(1 2 3 ())))
 
-  (zip/node (last-closed-block
-    (bb8/fast-forward (zip/seq-zip '(1 ((2 3) (4 5) 6 7) 8 (9)))))) =>
-      '((2 3) (4 5) 6 7))
+  ;; just to make sure
+  (zip/root (zip/replace (delete-prev-paren-pair (zip/seq-zip '(1 2 3 ()))) 9999)) =>
+    '(1 2 3 (9999))
+  (zip/root (clean-insert (bb8/fast-forward (zip/seq-zip '(1 2 3 ()))) 9999)) =>
+    '(1 2 3 (9999))
 
-
-(fact "last-closed-block returns nil if no prior blocks are found"
-  (last-closed-block
-    (bb8/fast-forward (zip/seq-zip '(1 2 3 4 5 6 7 8 (9))))) => nil)
-
-
-(fact "lift-sublist replaces the sublist at the cursor with its children"
-  (zip/root (lift-sublist (last-closed-block little-tree))) =>
-    '(1 2 3 4 (99 :PLACEHOLDER))
-  (zip/root
-    (lift-sublist
-      (last-closed-block
-        (bb8/fast-forward (zip/seq-zip '(1 ((2 3) (4 5) 6 7) 8 (9))))))) =>
-                                       '(1  (2 3) (4 5) 6 7  8 (9 :PLACEHOLDER)))
+  (zip/root (delete-prev-paren-pair 
+    (zip/prev (bb8/fast-forward (zip/seq-zip '(1 (2) 3 ())))))) => '(1 2 3 ())
+  (zip/root (delete-prev-paren-pair 
+    (zip/prev (bb8/fast-forward (zip/seq-zip '(1 ((2)) 3 ())))))) => '(1 (2) 3 ())
+  (zip/root (delete-prev-paren-pair 
+    (zip/prev (bb8/fast-forward (zip/seq-zip '((1 (((2))) 3) ())))))) => '(1 (((2))) 3 ())
 
 
-(fact "lift-sublist has no effect if the cursor is not at a list"
-  (lift-sublist little-tree) => little-tree)
-
-
-(fact "undo-placeholder moves the cursor back and deletes the :PLACEHOLDER"
-  (zip/root (undo-placeholder (last-closed-block little-tree))) =>
-    (zip/root little-tree)
-  (zip/node (undo-placeholder (last-closed-block little-tree))) =>
-    (zip/node little-tree))
-
-
-(fact "undo-placeholder doesn't blow up when there is no :PLACEHOLDER mark"
-  (zip/root (undo-placeholder little-tree)) => (zip/root little-tree))
-
-
-(fact "lift-last-closed-block does what it says"
-  (zip/root (lift-last-closed-block little-tree)) => '(1 2 3 4 (99)) 
-
-  (zip/root
-    (lift-last-closed-block
-      (bb8/fast-forward (zip/seq-zip '(1 ((2 3) (4 5) 6 7) 8 (9)))))) =>
-                                     '(1  (2 3) (4 5) 6 7  8 (9))
-  (zip/root
-    (lift-last-closed-block
-      (bb8/fast-forward (zip/seq-zip '(1 2 3 4 5 6 7 8 (9)))))) =>
-                                     '(1 2 3 4 5 6 7 8 (9)))
+  (zip/root (delete-prev-paren-pair 
+    (zip/prev (bb8/fast-forward (zip/seq-zip '(1 2 3 4 5)))))) => '(1 2 3 4 5))
 
 
 ;; apply-one-gene-to-state
@@ -250,90 +233,146 @@
   (new-root-helper
     (apply-one-gene-to-state
       [little-tree '()]
-      {:item :foo :close 0}
-      {})) => '(1 2 (3 4 (99 :foo)))
+      {:item :foo :close 0})) => '(1 2 (3 4 (99 :foo)))
   (new-node-helper
     (apply-one-gene-to-state
       [little-tree '()]
-      {:item :foo :close 0}
-      {})) => :foo
-    )
+      {:item :foo :close 0})) => :foo)
 
 
-(fact "branching gene, no close-nows"
-  (new-root-helper
+(fact "simple gene, no close-nows, some open-now"
+  (tree-vector-helper
+    (apply-one-gene-to-state
+      [little-tree '()]
+      {:item :foo :open 0 :close 0})) => '[(1 2 (3 4 (99 :foo))) ()]
+  (tree-vector-helper
+    (apply-one-gene-to-state
+      [little-tree '()]
+      {:item :foo :open 1 :close 0})) => '[(1 2 (3 4 (99 :foo ()))) (:END)]
+  (tree-vector-helper
+    (apply-one-gene-to-state
+      [little-tree '()]
+      {:item :foo :open 2 :close 0})) => '[(1 2 (3 4 (99 :foo ()))) (:AGAIN :END)]
+  (tree-vector-helper
+    (apply-one-gene-to-state
+      [little-tree '()]
+      {:item :foo :open 5 :close 0})) => 
+        '[(1 2 (3 4 (99 :foo ()))) (:AGAIN :AGAIN :AGAIN :AGAIN :END)])
+
+
+(fact "genes lacking :item fields do not insert `nil` in the program"
+  (tree-vector-helper
+    (apply-one-gene-to-state
+      [little-tree '()]
+      {:open 0 :close 0})) => '[(1 2 (3 4 (99))) ()]
+  (tree-vector-helper
+    (apply-one-gene-to-state
+      [little-tree '()]
+      {:open 1 :close 0})) => '[(1 2 (3 4 (99 ()))) (:END)]
+  (tree-vector-helper
+    (apply-one-gene-to-state
+      [little-tree '()]
+      {:open 5 :close 2})) => '[(1 2 (3 4 (99 () () ()))) (:AGAIN :AGAIN :END)])
+
+
+
+(fact "simple gene, some close-nows, some open-now"
+  (tree-vector-helper
+    (apply-one-gene-to-state
+      [little-tree '()]
+      {:item :foo :open 0 :close 2})) => '[(1 2 (3 4 (99 :foo))) ()]
+  (tree-vector-helper
+    (apply-one-gene-to-state
+      [little-tree '()]
+      {:item :foo :open 1 :close 2})) => ' [(1 2 (3 4 (99 :foo ()))) ()]
+  (tree-vector-helper
+    (apply-one-gene-to-state
+      [little-tree '()]
+      {:item :foo :open 2 :close 2})) =>
+        '[(1 2 (3 4 (99 :foo () ()))) ()]
+  (tree-vector-helper
+    (apply-one-gene-to-state
+      [little-tree '()]
+      {:item :foo :open 5 :close 2})) => 
+        '[(1 2 (3 4 (99 :foo () () ()))) (:AGAIN :AGAIN :END)])
+
+
+
+(fact "branching gene, no close-nows: note no :open field is present!"
+  (tree-vector-helper
     (apply-one-gene-to-state
       [little-tree '()]
       {:item :foo :close 0}
-      {:foo 1})) => '(1 2 (3 4 (99 :foo ())))
-  (new-node-helper
+      :branch-map {:foo 1})) => '[(1 2 (3 4 (99 :foo ()))) (:END)]
+
+  (tree-vector-helper
     (apply-one-gene-to-state
       [little-tree '()]
       {:item :foo :close 0}
-      {:foo 1})) => nil
-
-  (new-root-helper
-    (apply-one-gene-to-state
-      [little-tree '()]
-      {:item :foo :close 0}
-      {:foo 6})) => '(1 2 (3 4 (99 :foo ())))
-  (second
-    (apply-one-gene-to-state
-      [little-tree '()]
-      {:item :foo :close 0}
-      {:foo 6})) => '(:AGAIN :AGAIN :AGAIN :AGAIN :AGAIN :END)    
-  )
+      :branch-map {:foo 6})) =>
+        '[(1 2 (3 4 (99 :foo ()))) (:AGAIN :AGAIN :AGAIN :AGAIN :AGAIN :END)])
 
 
-(fact "branching gene, with close-nows"
-  (new-root-helper
+
+(fact "branching gene, with close-nows: note no :open gene is present!"
+  (tree-vector-helper
     (apply-one-gene-to-state
       [little-tree '()]
       {:item :foo :close 1}
-      {:foo 6})) => '(1 2 (3 4 (99 :foo () ())))
-  (second
-    (apply-one-gene-to-state
-      [little-tree '()]
-      {:item :foo :close 1}
-      {:foo 6})) => '(:AGAIN :AGAIN :AGAIN :AGAIN :END)   
+      :branch-map {:foo 6})) =>
+        '[(1 2 (3 4 (99 :foo () ()))) (:AGAIN :AGAIN :AGAIN :AGAIN :END)]
   
-  (new-root-helper
+  (tree-vector-helper
     (apply-one-gene-to-state
       [little-tree '()]
       {:item :foo :close 2}
-      {:foo 6})) => '(1 2 (3 4 (99 :foo () () ())))
-  (second
-    (apply-one-gene-to-state
-      [little-tree '()]
-      {:item :foo :close 2}
-      {:foo 6})) => '(:AGAIN :AGAIN :AGAIN :END)    
+      :branch-map {:foo 6})) => 
+        '[(1 2 (3 4 (99 :foo () () ()))) (:AGAIN :AGAIN :AGAIN :END)]
  
-  (new-root-helper
+  (tree-vector-helper
     (apply-one-gene-to-state
       [little-tree '()]
       {:item :foo :close 99}
-      {:foo 6})) => '(1 2 (3 4 (99 :foo () () () () () ())))
-  (second
+      :branch-map {:foo 6})) => '[(1 2 (3 4 (99 :foo () () () () () ()))) ()])
+
+
+
+(fact "explicit :open trumps implicit"
+
+  ;; without an explicit gene
+  (tree-vector-helper
     (apply-one-gene-to-state
       [little-tree '()]
       {:item :foo :close 99}
-      {:foo 6})) => '()    )
+      :branch-map {:foo 6})) => '[(1 2 (3 4 (99 :foo () () () () () ()))) ()]
+
+  ;; with an explicit gene
+  (tree-vector-helper
+    (apply-one-gene-to-state
+      [little-tree '()]
+      {:item :foo :open 2 :close 99}
+      :branch-map {:foo 6})) => '[(1 2 (3 4 (99 :foo () ()))) ()])
 
 
 (fact "silent gene"
-  (new-root-helper
+  (tree-vector-helper
     (apply-one-gene-to-state
-      [little-tree '()]
-      {:item :foo :close 0 :silent true}
-      {})) => '(1 2 (3 4 (99))))
+      [little-tree '(:AGAIN :AGAIN :END)]
+      {:item :foo :close 0 :silent true})) => '[(1 2 (3 4 (99))) (:AGAIN :AGAIN :END)])
 
 
 (fact "a silent gene closes no blocks"
-  (new-node-helper
+  (tree-vector-helper
     (apply-one-gene-to-state
       [little-tree '()]
-      {:item :foo :close 3 :silent true}
-      {})) => 99)
+      {:item :foo :close 3 :silent true})) => (tree-vector-helper [little-tree '()]))
+
+
+(fact "a silent gene opens no blocks"
+  (tree-vector-helper
+    (apply-one-gene-to-state
+      [little-tree '()]
+      {:item :foo :open 3 :silent true})) => (tree-vector-helper [little-tree '()]))
 
 
 (fact "a silent gene doesn't change the block-stack"
@@ -341,49 +380,50 @@
     (apply-one-gene-to-state
       [little-tree '(:AGAIN :AGAIN :END)]
       {:item :foo :close 3 :silent true}
-      {:foo 8})) => '(:AGAIN :AGAIN :END))
+      :branch-map {:foo 8})) => '(:AGAIN :AGAIN :END))
 
 
 (fact "noop_open_paren gene"
   (new-root-helper
     (apply-one-gene-to-state
       [little-tree '()]
-      {:item :noop_open_paren :close 0}
-      {})) => '(1 2 (3 4 (99 ())))
+      {:item :noop_open_paren :close 0})) => '(1 2 (3 4 (99 ())))
   (new-root-helper
     (apply-one-gene-to-state
       [little-tree '()]
-      {:item :noop_open_paren :close 0 :silent true}
-      {})) => '(1 2 (3 4 (99)))
+      {:item :noop_open_paren :close 0 :silent true})) => '(1 2 (3 4 (99)))
+
+
+
 
   )
 
 ;; plush->push
 
 (fact "plush->push for empty genomes"
-  (plush->push [] {}) => [])
+  (plush->push []) => [])
 
 
 (fact "plush->push for simple genomes"
   (plush->push [{:item 1 :close 0}
                 {:item 2 :close 0}
-                {:item 3 :close 0}] {}) => [1 2 3])
+                {:item 3 :close 0}]) => [1 2 3])
 
 
 (fact "plush->push for branching genomes"
   (plush->push [{:item :branches :close 0}
                 {:item 2 :close 0}
-                {:item 3 :close 0}] {:branches 2}) => '[:branches (2 3) ()]
+                {:item 3 :close 0}] :branch-map {:branches 2}) => '[:branches (2 3) ()]
   (plush->push [{:item :branches :close 1}
                 {:item 2 :close 0}
-                {:item 3 :close 0}] {:branches 2}) => '[:branches () (2 3)]
+                {:item 3 :close 0}] :branch-map {:branches 2}) => '[:branches () (2 3)]
   (plush->push [{:item :branches :close 1}
                 {:item 2 :close 1}
-                {:item 3 :close 1}] {:branches 3}) =>
+                {:item 3 :close 1}] :branch-map {:branches 3}) =>
       '[:branches () (2) (3)]
   (plush->push [{:item :branches :close 1}
                 {:item 2 :close 1}
-                {:item :branches :close 1}] {:branches 3}) => 
+                {:item :branches :close 1}] :branch-map {:branches 3}) => 
                   '[:branches () (2) (:branches () () ())])
 
 
@@ -417,16 +457,16 @@
       {:item 1    :close 0}
       {:item 2    :close 3}
       {:item 3    :close 0}]
-    {:foo 1}) => '[:foo (1 2) 3])
+    :branch-map {:foo 1}) => '[:foo (1 2) 3])
 
 
 (fact "plush->push example per Tom Helmuth"
   (plush->push
     helmuth-1
-    { :exec-do*times 1
-      :exec-if       2
-      :code-quote    1
-      :exec-rot      3}) =>
+    :branch-map { :exec-do*times 1
+                  :exec-if       2
+                  :code-quote    1
+                  :exec-rot      3}) =>
   '[:exec-do*times (8 11) :exec-if ()
     (17 (false :code-quote (:float-mult)) :exec-rot (34.44) () ())])
 
@@ -434,57 +474,193 @@
 (fact "plush->push for noop_delete_prev_paren_pair genes"
   (plush->push
     (conj helmuth-1 {:item :noop_delete_prev_paren_pair :close 0})
-    { :exec-do*times 1
-      :exec-if       2
-      :code-quote    1
-      :exec-rot      3}) =>
-  '[:exec-do*times (8 11) :exec-if ()
-    (17  false :code-quote (:float-mult)  :exec-rot (34.44) () ())])
-;;      ^ CHANGE                CHANGE  ^
+    :branch-map { :exec-do*times 1
+                  :exec-if       2
+                  :code-quote    1
+                  :exec-rot      3}) =>
+  ; '[:exec-do*times (8 11) :exec-if ()
+  ;   (17 (false :code-quote (:float-mult)) :exec-rot (34.44) () ())])
+  ;                                                   «34.44» cursor
+  ;       «false :code-quote (:float-mult)»                   previous block
+    '[:exec-do*times (8 11) :exec-if () 
+      (17  false :code-quote (:float-mult) :exec-rot (34.44) () ())]
+      )
+                                             
+
+
+;; :item-less genomes can build trees
+
+
+(fact "item-less plush genomes can be translated into trees"
+  (plush->push [{} {} {} {}]) => []
+  (plush->push [{:open 3 :close 2} {:item 2}]) => '[() () (2)]
+  (plush->push [{:open 2} {:open 1 :close 1} {:open 1} {:close 2} {:open 1}]) => '[(() ()) (())])
 
 
 ;; derived-push-branch-map (the default)
 
 
-(fact "if not given, the plush->push branch-map is derived from an Interpreter instance directly"
+(fact "a backwards-compatible :branch-map is available"
   (plush->push []) => []
   (plush->push [{:item 1 :close 0}
                 {:item 2 :close 0}
-                {:item 3 :close 0}]) => [1 2 3]
+                {:item 3 :close 0}]
+                :branch-map derived-push-branch-map) => [1 2 3]
   (plush->push [{:item :code-quote :close 0}
                 {:item 2 :close 0}
-                {:item 3 :close 0}]) => '[:code-quote (2 3)]
+                {:item 3 :close 0}]
+                :branch-map derived-push-branch-map) => '[:code-quote (2 3)]
   (plush->push [{:item :code-quote :close 0}
                 {:item 2 :close 1}
-                {:item 3 :close 0}]) => '[:code-quote (2) 3]
+                {:item 3 :close 0}]
+                :branch-map derived-push-branch-map) => '[:code-quote (2) 3]
   (plush->push [{:item :code-quote :close 1}
                 {:item 2 :close 0}
-                {:item 3 :close 0}]) => '[:code-quote () 2 3]
+                {:item 3 :close 0}]
+                :branch-map derived-push-branch-map) => '[:code-quote () 2 3]
   (plush->push [{:item :exec-rotate :close 0}
-                {:item :exec-rotate :close 0}]) => '[:exec-rotate (:exec-rotate () () ()) () ()])
+                {:item :exec-rotate :close 0}]
+                :branch-map derived-push-branch-map) => '[:exec-rotate (:exec-rotate () () ()) () ()])
 
 
 ;;; push->plush
 
 
-(fact "an empty program produces an empty genome"
-  (push->plush [] {}) => [])
-
-
-(fact "a simple linear program produces a simple linear genome"
-  (push->plush [1 2 3] {}) =>
-    [{:item 1   :close 0}
-    {:item 2    :close 0}
-    {:item 3    :close 1}]
-  )
-
-
-(future-fact "a genome will record branches in the :open gene, as encoded in the branch-map"
-  (push->plush [1 :foo 2] {}) =>
-    [{:item 1     :open 0  :close 0}
-     {:item :foo  :open 1  :close 0}
-     {:item 3     :open 0  :close 1}]
-  )
+(future-fact "push->plush will eventually work"
+  (push->plush []) => []
+  (push->plush [1 (2 (3) (4))] =>
+    [ {:item 1 :open 1}
+      {:item 2 :open 2}
+      {:item 3 :close 1}
+      {:item 4}
+    ]))
 
 
 
+;;; facts for README.md
+
+
+(fact "an empty genome produces an empty program"
+  (plush->push []) => '[])
+
+
+(fact "an genome with genes containing only :items produces a linear program, without a :branch-map"
+  (plush->push [
+    {:item 1}
+    {:item 2}
+    {:item 3}]) => '[1 2 3])
+
+
+(fact "a genome with :open values produces a branched program"
+  (plush->push [
+    {:item 1 :open 1}
+    {:item 2 :open 0}
+    {:item 3 :open 1}]) => '[1 (2 3 ())]
+  (plush->push [
+    {:item 1 :open 0}
+    {:item 2 :open 1}
+    {:item 3 :open 1}]) => '[1 2 (3 ())]
+  (plush->push [
+    {:item 1 :open 2}
+    {:item 2 :open 0}
+    {:item 3 :open 0}]) => '[1 (2 3) ()])
+
+
+(fact "a gene with :close values immediately closes open and pending branches"
+  (plush->push [
+    {:item 1 :open 1 :close 1}
+    {:item 2 :open 0}
+    {:item 3 :open 1}]) => '[1 () 2 3 ()] ;; compare with above
+  (plush->push [
+    {:item 1 :open 0 :close 1}
+    {:item 2 :open 1 :close 1}
+    {:item 3 :open 1}]) => '[1 2 () 3 ()]
+  (plush->push [
+    {:item 1 :open 2}
+    {:item 2 :open 0 :close 1}
+    {:item 3 :open 0}]) => '[1 (2) (3)])
+
+
+(fact ":open and :close values are enough to build branching trees"
+  (plush->push [
+    {:open 1 :close 1}
+    {:open 0}
+    {:open 1}]) => '[() ()] ;; compare with above
+  (plush->push [
+    {:open 0 :close 1}
+    {:open 1 :close 1}
+    {:open 1}]) => '[() ()]
+  (plush->push [
+    {:open 2}
+    {:open 1 :close 1}
+    {:open 0}]) => '[(()) ()]
+  (plush->push [
+    {:open 4}
+    {:open 4 :close 1}
+    {:open 4}
+    {:item 1}]) => '[(() ((1) () () ()) () ()) () () ()])
+
+
+(fact "translating with a `:branch-map` argument creates default `:open` values for specified `:item` values"
+  (plush->push [{:item :foo} {:item :bar} {:item :baz}]
+    :branch-map {:foo 2 :baz 2}) => '[:foo (:bar :baz () ()) ()]
+  (plush->push [{:item :foo} {:item :foo} {:item :foo}]
+    :branch-map {:foo 2}) => '[:foo (:foo (:foo () ()) ()) ()])
+
+(fact "a :branch-map's default can be overridden explicitly in a gene"
+  (plush->push [{:item :foo}
+                {:item :bar} 
+                {:item :baz}]
+    :branch-map {:foo 2 :baz 2}) => '[:foo (:bar :baz () ()) ()]
+  (plush->push [{:item :foo :open 0} 
+                {:item :bar :open 3}
+                {:item :baz}]
+    :branch-map {:foo 2 :baz 2}) => '[:foo :bar (:baz () ()) () ()])
+
+
+(fact "a 'readymade' `:branch-map` exists, analogous to Clojush's translation behavior"
+  (plush->push [{:item :exec-swap} {:item 3 :close 1} {:item 2 :close 1}]
+    :branch-map answer-factory.genome.plush/derived-push-branch-map) =>
+      '[:exec-swap (3) (2)])
+
+
+(fact ":noop_delete_prev_paren_pair"
+  (plush->push [
+    {:item 1 :open 1 :close 1}
+    {:item 2 :open 0 :close 1}
+    {:item 3 :open 1}]) => '[1 () 2 3 ()]
+  (plush->push [
+    {:item :noop_delete_prev_paren_pair}
+    {:item 1 :open 1 :close 1}
+    {:item 2 :open 0 :close 1}
+    {:item 3 :open 1}]) => '[1 () 2 3 ()]
+  (plush->push [
+    {:item 1 :open 1 :close 1}
+    {:item 2 :open 0 :close 1}
+    {:item :noop_delete_prev_paren_pair}
+    {:item 3 :open 1}]) => '[1 2 3 ()]
+  (plush->push [
+    {:item 1 :open 1 :close 1}
+    {:item 2 :open 0 :close 1}
+    {:item 3 :open 1}
+    {:item :noop_delete_prev_paren_pair}
+    ]) => '[1 2 3 ()])
+
+
+(fact ":noop_open_paren"
+  (plush->push [
+    {:item :noop_open_paren}
+    {:item 1 :open 1 :close 1}
+    {:item 2 :open 0 :close 1}
+    {:item 3 :open 1}]) => '[(1 () 2 3 ())]
+  (plush->push [
+    {:item 1 :open 1 :close 1}
+    {:item 2 :open 0 :close 1}
+    {:item :noop_open_paren}
+    {:item 3 :open 1}]) => '[1 () 2 (3 ())]
+  (plush->push [
+    {:item 1 :open 1 :close 1}
+    {:item 2 :open 0 :close 1}
+    {:item 3 :open 1}
+    {:item :noop_open_paren}
+    ]) => '[1 () 2 3 (())])

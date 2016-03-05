@@ -12,16 +12,17 @@
                   {k (:exec (:needs v))}
                   {})))
     {}
-    (:instructions (push/interpreter)))
-  )
+    (:instructions (push/interpreter))))
 
 
 (defn clean-insert
-  "takes a zipper, and inserts the given item at the current cursor position; if the cursor is currently in an empty sub-list, it does so by deleting the `nil` placeholder; cursor then moves to the inserted item"
+  "takes a zipper, and inserts the given item at the current cursor position; if the cursor is currently in an empty sub-list, it does so by deleting the `nil` placeholder; cursor then moves to the inserted item. If the item is a `nil`, no change is made."
   [z item]
-  (if (nil? (zip/node z))
-    (zip/replace z item)
-    (-> z (zip/insert-right item) zip/right)))
+  (if (nil? item)
+    z
+    (if (nil? (zip/node z))
+      (zip/replace z item)
+      (-> z (zip/insert-right item) zip/right))))
 
 
 (defn empty-program
@@ -31,7 +32,7 @@
 
 
 (defn append-token
-  "takes a zipper and any item; inserts the item to the right of the current cursor position, or replaces the current cursor if it is in an empty sub-list; cursor moves to the insered item"
+  "takes a zipper and any item; inserts the item to the right of the current cursor position, or replaces the current cursor if it is in an empty sub-list; cursor moves to the insered item. If the item is a `nil`, nothing is inserted."
   [z item]
   (clean-insert z item))
 
@@ -61,55 +62,43 @@
       zip/down))
 
 
-(defn last-closed-block
-  "returns nil if not found, otherwise returns the zipper with the cursor moved up and then left (and with :PLACEHOLDER inserted to the right of the original cursor position)"
+
+
+
+; (1 2 3 4 5 *)   ->  (1 2 3 4 5 *)
+; (1 2 3 (4 (5 (*)))   ->  (1 2 3 (4 (5 (*)))
+; (1 (2) 3 (4 (5 (*)))   ->  (1 2 3 (4 (5 (*)))
+; (1 2 () 3 4 5 *)   ->  (1 2 3 4 5 *)
+; (1 2 ( 3 4 ) 5 *)   ->  (1 2 3 4 5 *)
+; (1 2 ( 3 4 ) ( 5 * ))   ->  (1 2 3 4 ( 5 * ))
+; (1 2 ( 3 4 ) ( (5) * ))   ->  (1 2 ( 3 4 ) ( 5 * ))
+
+
+(defn lift-branch
+  "If the current zip cursor is a branch, it is replaced with its own contents. Otherwise, the zipper is returned unchanged"
   [z]
-  (loop [loc (move-up-safely (zip/insert-right z :PLACEHOLDER))]
-    (cond
-      (bb8/root? loc) nil
-      (and (empty? (zip/lefts loc))
-           (some? (zip/up loc))) (recur (zip/up loc))
-      (and (zip/branch? loc)
-           (not-any? #(= % :PLACEHOLDER) (zip/children loc))) loc
-      :else (recur (zip/left loc)))))
-
-
-(defn lift-sublist
-  "if the cursor in the zipper holds a sub-list, it is replaced with its own children; otherwise, the zipper is returned unchanged"
-  [z]
-  (if (not (zip/branch? z))
-    z
-    (let [c (zip/children z)]
-      (loop [loc       (zip/replace z (first c))
-             remainder (rest c)]
-        (if (empty? remainder)
-          loc
-          (recur (-> loc
-                     (zip/insert-right (first remainder))
-                     (zip/right))
-                 (rest remainder)))))))
-
-
-(defn undo-placeholder
-  "takes a zipper which may have a (single) :PLACEHOLDER item somewhere; if present, it's removed and the cursor is left in the previous position; if absent, the zipper is returned unchanged"
-  [z]
-  (loop [loc (bb8/rewind z)]
-    (cond
-      (zip/end? loc)
-        z
-      (= :PLACEHOLDER (zip/node (zip/next loc)))
-        (-> loc zip/right zip/remove)
-      :else
-        (recur (zip/next loc)))))
-
-
-(defn lift-last-closed-block
-  "if there is a 'last closed block' relative to the current cursor position, it is 'lifted' to its parent's level; otherwise, the zipper is returned unchanged"
-  [z]
-  (if (some? (last-closed-block z))
-    (undo-placeholder (lift-sublist (last-closed-block z)))
+  (if (zip/branch? z)
+    (let [kids (zip/children z)]
+      (if (empty? kids)
+        (zip/remove z)
+        (reduce
+          (fn [z2 k] (zip/insert-right z2 k))
+          (zip/replace z (first kids))
+          (reverse (rest kids)))
+        ))
     z))
 
+
+(defn delete-prev-paren-pair
+  "Assumes the zipper's cursor is starting in the last position of the depth-first search (the 'add' position). If there is a sibling to the left that is a branch, then that branch is replaced with its contents (they are 'lifted'). If no left sibling is a branch, then the cursor moves up and checks left siblings until one is found, or the head is reached."
+  [z]
+  (-> (loop [loc  z]
+        (cond
+          (bb8/root? loc) z
+          (nil? (zip/left loc)) (recur (zip/up loc))
+          (zip/branch? (zip/left loc)) (-> loc zip/left lift-branch)
+          :else (recur (zip/left loc))))
+      bb8/fast-forward))
 
 
 (defn close-up-one
@@ -146,10 +135,10 @@
 
 (defn apply-one-gene-to-state
   "takes a tuple composed of a program (zipper) and branch-stack (seq), a single Plush gene (map) and a branch-map (map) which contains information about how many branches should be opened for particular gene items; if the gene's `:silent` field evaluates to true, it does nothing"
-  [[program branch-stack] gene branch-map]
+  [[program branch-stack] gene & {:keys [branch-map] :or {branch-map {} }}]
   (let [item         (:item gene)
-        close-nows   (:close gene)
-        branches     (or (get branch-map item) 0)
+        branches     (or (:open gene) (get branch-map item 0))
+        close-nows   (or (:close gene) 0)
         silent?      (:silent gene)]
     (if silent?
       [program branch-stack]
@@ -157,7 +146,7 @@
             (= item :noop_open_paren)
               [(begin-branch program) branch-stack]
             (= item :noop_delete_prev_paren_pair)
-              [(lift-last-closed-block program) branch-stack]
+              [(delete-prev-paren-pair program) branch-stack]
             (pos? branches)
               [(-> program
                    (append-token item)
@@ -173,8 +162,7 @@
 
 (defn plush->push
   "takes a genome (collection of Plush gene maps) and a branch-map (map), and creates a complete Push program based on the specified gene values and the branch-map directives"
-  ([genome] (plush->push genome derived-push-branch-map))
-  ([genome branch-map]
+    [genome & {:keys [branch-map] :or {branch-map {} }}]
     (loop [program   (empty-program)
            gene      (first genome)
            remainder (rest genome)
@@ -182,22 +170,22 @@
       (if (nil? gene)
         (into [] (zip/root (first (close-up-n [program stack] (count stack)))))
         (let [[p s] (apply-one-gene-to-state
-                      [program stack] gene branch-map)]
-          (recur p (first remainder) (rest remainder) s))))))
+                      [program stack] gene :branch-map branch-map)]
+          (recur p (first remainder) (rest remainder) s)))))
 
 
 
-(defn push->plush
-  "takes a Push program and transforms it into the simplest possible Plush genome: :close genes are only used for the minimal necessary parenthesis-closing, there are no :silent genes, and so forth. Non-instruction based coe blocks are initiated with :noop_open_paren"
-  [program branch-map]
-  (loop [loc    (zip/next (zip/seq-zip (seq program)))
-         genome []]
-    (if (zip/end? loc)
-      genome
-      (recur    (zip/next loc)
-                (if (zip/branch? loc)
-                  (conj genome {:item :noop_open_paren :close 0})
-                  (if (= (zip/rightmost loc) loc)
-                    (conj genome {:item (zip/node loc) :close 1})
-                    (conj genome {:item (zip/node loc) :close 0})
-                  ))))))
+; (defn push->plush
+;   "takes a Push program and transforms it into the simplest possible Plush genome: :close genes are only used for the minimal necessary parenthesis-closing, there are no :silent genes, and so forth."
+;   [program & {:keys [branch-map] :or {branch-map {} }}]
+;   (loop [loc    (zip/next (zip/seq-zip (seq program)))
+;          genome []]
+;     (if (zip/end? loc)
+;       genome
+;       (recur    (zip/next loc)
+;                 (if (zip/branch? loc)
+;                   (conj genome {:item :noop_open_paren :close 0})
+;                   (if (= (zip/rightmost loc) loc)
+;                     (conj genome {:item (zip/node loc) :close 1})
+;                     (conj genome {:item (zip/node loc) :close 0})
+;                   ))))))
