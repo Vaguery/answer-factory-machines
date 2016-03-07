@@ -105,10 +105,13 @@
 
 (defn plush-guess
   "Takes a hashmap with one or more `item-guess` generators (vectors or functions) as keys, and non-negative numbers as values, a vector of non-negative relative weights for the first n `:close` gene values, and a :silent probabilty. Returns a single Plush gene by invoking `weighted-item-guess` on the hash-map."
-  [item-hash close-weights silent-probability]
-  {:item   (weighted-item-guess item-hash)
-   :close  (random/discrete-sample (range (count close-weights)) close-weights)
-   :silent (< (rand) silent-probability)})
+  [item-hash open-weights close-weights silent-probability]
+  (let [item (weighted-item-guess item-hash)
+        openings (random/discrete-sample (range (count open-weights)) open-weights)
+        closings (random/discrete-sample (range (count close-weights)) close-weights)
+        silent?  (< (rand) silent-probability)]
+    {:item item :open openings :close closings :silent silent?}))
+     
 
 
 

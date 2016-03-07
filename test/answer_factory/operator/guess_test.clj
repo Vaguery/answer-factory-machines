@@ -139,18 +139,18 @@
 
 (fact "plush-guess produces a Plush gene"
 
-  (plush-guess {[1] 9} [9] 0.0) => {:close 0, :item 1, :silent false}
+  (plush-guess {[1] 9} [1] [9] 0.0) => {:close 0, :open 0, :item 1, :silent false}
 
-  (plush-guess {[1] 12} [9] 1.0) => {:close 0, :item 1, :silent true}
+  (plush-guess {[1] 12} [1] [9] 1.0) => {:close 0, :open 0, :item 1, :silent true}
 
-  (plush-guess {[1] 8} [8 4 2 2] 0.0) => {:close 3, :item 1, :silent false}
+  (plush-guess {[1] 8} [8 4 2 2] [8 4 2 2] 0.0) => {:close 3, :open 3, :item 1, :silent false}
     (provided (rand) => 0.9)
 
   (plush-guess {(fn [] (- 5 4))   10
                 (fn [] (* -1 -1)) 10
                 [1 3/3]           10}
-               [8]
-               0.0) => {:close 0, :item 1, :silent false})
+               [8] [8]
+               0.0) => {:close 0, :open 0, :item 1, :silent false})
 
 
 ;;; constructing random plush genes from scratch
@@ -167,7 +167,7 @@
         #(ref-guess target)                30
         #(instruction-guess target)        80
       }
-      [88 44 13 2]
+       [88 44 13 2] [88 44 13 2]
       0.05
       )  =not=> (throws)      ;; examine this to see what we're getting
   ))
