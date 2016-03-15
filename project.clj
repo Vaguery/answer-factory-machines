@@ -2,7 +2,7 @@
   :description "A platform for generative programming."
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [danlentz/clj-uuid "0.1.6"]
-                 [klapaucius "0.1.9-SNAPSHOT"]
+                 [klapaucius "0.1.10-SNAPSHOT"]
                  [org.clojure/java.jdbc "0.4.2"]
                  [org.xerial/sqlite-jdbc "3.8.11.2"]
                  [clj-time "0.11.0"]

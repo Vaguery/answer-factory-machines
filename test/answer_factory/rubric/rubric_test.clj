@@ -7,7 +7,6 @@
 
 
 
-
 (fact "I can create a TestCase"
   (keys (test-case)) => '(:id :note :context :inputs :expected)
 
@@ -30,6 +29,7 @@
   (get-in (test-case :inputs {:foo 7.7}) [:context :bindings]) => {:foo '(7.7)}
   (get-in (test-case :expected {:bar 1.1}) [:context :bindings]) => {:bar '()}
 )
+
 
 
 (fact "test-case can include expected values for stacks"
@@ -110,6 +110,7 @@
   (L1-distance-from-top-result {:y :foo} {:y '()} :missing) => {:y :missing}
   (L1-distance-from-top-result {:y :foo} {:x '(:foo)} :missing) => {:y :missing}
   )
+
 
 (fact "L1-distance-from-top-result handling multiple items"
 

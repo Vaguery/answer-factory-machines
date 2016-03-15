@@ -89,7 +89,7 @@
 
 
 (defn L1-distance-from-top-result
-  "Compares the expected result to the top item on the indicated result stack, returning a hash-map with the same keys and the absolute deviation as its value. If a key or value is missing from the `results-hash`, `missing-value` is returned instead. If any values are non-numeric in the `expected-hash`, a _match error_ is returned instead: 0.0 if they are equal, 1.0 otherwise."
+  "Compares the expected result to the top item on the indicated result stack, returning a hash-map with the indicated key and the absolute deviation as its value. If the key (or stack) is missing from the `results-hash`, `missing-value` is returned instead. If the value found in the `expected-hash` is non-numeric, a _match error_ value is returned instead: 0.0 if they are equal, 1.0 otherwise."
   [expected-hash results-hash missing-value]
   (let [k      (first (keys expected-hash))
         target (k expected-hash)

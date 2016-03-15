@@ -123,9 +123,9 @@
      }))
 
 
-(println (map :inputs (simple-training-set
-  (p/interpreter :bindings {:x1 1 :x2 11})
-  [ [{:x1 8 :x2 12} {:y 200}]
-    [{:x1 3 :x2 11} {:y 140}]
-    [{:x1 18 :x2 2} {:y 200}] ]
-  )))
+; (println (map :inputs (simple-training-set
+;   (p/interpreter :bindings {:x1 1 :x2 11})
+;   [ [{:x1 8 :x2 12} {:y 200}]
+;     [{:x1 3 :x2 11} {:y 140}]
+;     [{:x1 18 :x2 2} {:y 200}] ]
+;   )))
