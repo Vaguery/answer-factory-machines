@@ -1,4 +1,4 @@
-(defproject answer-factory "0.0.2-SNAPSHOT"
+(defproject answer-factory "0.0.3-SNAPSHOT"
   :description "A support library for generative programming."
   :url "https://github.com/Vaguery/answer-factory-clj"
   :dependencies [[org.clojure/clojure "1.8.0"]
