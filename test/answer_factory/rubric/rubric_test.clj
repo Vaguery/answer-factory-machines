@@ -112,7 +112,7 @@
   )
 
 
-(fact "L1-distance-from-top-result handling multiple items"
+(future-fact "L1-distance-from-top-result handling multiple items"
 
   (L1-distance-from-top-result {:z1 [88 99]} {:z1 '([62 7])} :missing) => {:z1 1.0}
 
