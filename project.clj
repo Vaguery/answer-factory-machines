@@ -5,6 +5,7 @@
                  [danlentz/clj-uuid "0.1.6"]
                  [klapaucius "0.1.10-SNAPSHOT"]
                  [clj-time "0.11.0"]
-                 [org.clojure/math.numeric-tower "0.0.4"]]
-  :profiles {:dev {:dependencies [[midje "1.8.3"]]}})
+                 [org.clojure/math.numeric-tower "0.0.4"]
+                 [midje "1.8.3"]]
+                )
   
