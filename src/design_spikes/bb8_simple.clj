@@ -7,9 +7,6 @@
   (:use [answer-factory.genome.bb8])
   (:use clojure.pprint)
   (:require [clojure.edn :as edn])
-  (:require [ragtime.jdbc :as jdbc])
-  (:require [ragtime.repl :as repl])
-  (:require [clojure.java.jdbc :as j])
   (:require [clj-time.local :as t])
   (:require [clojure.math.numeric-tower :as math])
   (:require [answer-factory.rubric.push :as rubric])
@@ -38,43 +35,6 @@
 
 
 
-;;
-;; some db setup stuff
-;;
-
-(defn silent-reporter
-  "For ragtime use; prints nothing to STDOUT"
-  [& stuff]
-  ;; do nothing
-  )
-
-
-(def db-migrate-config
-  { :datastore 
-      (jdbc/sql-database 
-        {:connection-uri "jdbc:sqlite:resources/db/test.db"})
-    :migrations 
-      (jdbc/load-resources "migrations")
-    ; :reporter silent-reporter
-    })
-
-
-
-;;
-;; jdbc
-;;
-
-(def population-db { :subprotocol "sqlite"
-                     :subname "resources/db/test.db"})
-
-
-(fact "I can roll back all the migrations, and then re-run them" :spike
-  (repl/rollback db-migrate-config 5) ;; kill everything
-  (repl/migrate db-migrate-config)    ;; start afresh
-  (fact "there is an empty table now"
-    (let [r (j/query population-db ["SELECT count(id) from answers"])]
-      (first r) => {(keyword "count(id)") 0})))
-
 
 (defn genome->sql
   [genome]
@@ -97,14 +57,6 @@
           #(guess/ref-guess x-runner)              30
           #(guess/instruction-guess x-runner)      30
         })))))
-
-
-
-(fact "I can write answers" :spike
-  (apply (partial j/insert! population-db :answers) random-pop)
-  (fact "there are answers in the table now"
-    (let [r (j/query population-db ["SELECT count(id) from answers"])]
-      (first r) => {(keyword "count(id)") 100})))
 
 
 ; ;; rubrics
