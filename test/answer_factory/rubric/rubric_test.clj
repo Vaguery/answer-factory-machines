@@ -112,15 +112,6 @@
   )
 
 
-(future-fact "L1-distance-from-top-result handling multiple items"
-
-  (L1-distance-from-top-result {:z1 [88 99]} {:z1 '([62 7])} :missing) => {:z1 1.0}
-
-  (L1-distance-from-top-result {:z1 1 :z2 2} {:z1 '(7) :z2 '(8)} :missing) => {:z1 6 :z2 6}
-
-)
-
-
 ;; 
 ;; score an Answer using a single ErrorRubric:
 ;;   1. extract TestCase and answer

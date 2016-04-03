@@ -1,5 +1,5 @@
 (ns answer-factory.rubric.push
-    (:use midje.sweet)
+  (:use midje.sweet)
 
   (:require [push.core :as push])
   (:require [clj-uuid :as uuid])
