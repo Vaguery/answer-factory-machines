@@ -3,7 +3,7 @@
   :url "https://github.com/Vaguery/answer-factory-clj"
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [danlentz/clj-uuid "0.1.6"]
-                 [klapaucius "0.1.12-SNAPSHOT"]
+                 [klapaucius "0.1.13-SNAPSHOT"]
                  [clj-time "0.11.0"]
                  [org.clojure/math.numeric-tower "0.0.4"]
                  [midje "1.8.3"]]
