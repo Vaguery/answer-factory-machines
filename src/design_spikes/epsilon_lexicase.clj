@@ -45,24 +45,45 @@
   )
 
 
-(defn epsilon-to-delta
-  "Takes a collection of numbers, and an `epsilon` (a proportion 0 to 1). Returns an equivalent `delta`, which is the absolute size of that percentile of the numbers."
-  [numbers epsilon]
-  (let [best  (apply min numbers)
-        worst (apply max numbers)]
-    (* epsilon (Math/abs (- worst best)))))
+(defn median
+  "returns the median of a set of numbers; does not attempt to interpolate for even-sized collections, or check for empty collections"
+  [numbers]
+  (nth (sort numbers) (/ (count numbers) 2)))
 
 
-(fact "epsilon-to-delta returns an absolute range"
-  (epsilon-to-delta [0 1 2 3 4 5 6 7 9] 0.5) => 4.5
-  (epsilon-to-delta [0 1 2 3 4 5 6 7 9] 0) => 0
-  (epsilon-to-delta [0 1 2 3 4 5 6 7 9] 1) => 9
-  (epsilon-to-delta [0 0 0 0 1 1 1 1] 0.5) => 0.5
-  (epsilon-to-delta [0 0 0 0 1 1 1 1 10] 0.2) => 2.0)
+(fact "median works as expected"
+  (median [0 1 2 3 11 12 13 14]) => 11
+  (median [0 1 2 3 11 12 13]) => 3
+  (median (shuffle [0 1 2 3 11 12 13 14 15 16])) => 12
+  (median (shuffle [0 1 2 3 11 12 13 14 15])) => 11
+  )
+
+
+(defn median-absolute-deviation
+  "Takes a collection of numbers, and returns the Median Absolute Deviation. The median of the values is calculated, and the median of the absolute deviations of the values from that is returned."
+  [numbers]
+  (let [midpoint   (median numbers)
+        deviations (map #(-' % midpoint) numbers)]
+    (median (map #(Math/abs %) deviations))
+    ))
+
+
+(fact "median-absolute-deviation returns a value for epsilon"
+  (median-absolute-deviation [0 1 2 3 11 12 13 14]) => 8
+  (median-absolute-deviation [0 1 2 3 11 12 13]) => 3
+  (median-absolute-deviation (shuffle [0 1 2 3 11 12 13 14 15 16])) => 4
+  (median-absolute-deviation (shuffle [0 1 2 3 11 12 13 14 15])) => 4
+  (median-absolute-deviation (range 10)) => 3
+  (median-absolute-deviation (range 100)) => 25
+  (median-absolute-deviation (range 1000)) => 250
+  (median-absolute-deviation (concat (range 1000) (range 10))) => 253
+  (median-absolute-deviation (concat (range 1000) (range 100))) => 275
+  (median-absolute-deviation (concat (range 10) (range 10) (range 100))) => 30
+  )
 
 
 
-(defn delta-simple-selection
+(defn sloppy-simple-selection
   "Takes a population of answers, an index of a particular score on which to select, and a `delta` value (an absolute range of scores). Returns all answers whose score on the indexed task is within `delta` of the best."
   [answers which-score delta]
   (let [scores (map #(get-score % which-score) answers)
@@ -73,141 +94,90 @@
     ))
 
 
-(fact "delta-simple-selection returns the best and maybe more"
-                                                          ;; 2 3 5 1 4
-  (map :genome (delta-simple-selection population 1 0)) => '(      4  )
-  (map :genome (delta-simple-selection population 1 1)) => '(1     4  )
-  (map :genome (delta-simple-selection population 1 2)) => '(1 2   4  )
-  (map :genome (delta-simple-selection population 1 3)) => '(1 2   4 5)
-  (map :genome (delta-simple-selection population 1 4)) => '(1 2 3 4 5)
+(fact "sloppy-simple-selection returns the best and maybe more"
+                                                           ;; 2 3 5 1 4
+  (map :genome (sloppy-simple-selection population 1 0)) => '(      4  )
+  (map :genome (sloppy-simple-selection population 1 1)) => '(1     4  )
+  (map :genome (sloppy-simple-selection population 1 2)) => '(1 2   4  )
+  (map :genome (sloppy-simple-selection population 1 3)) => '(1 2   4 5)
+  (map :genome (sloppy-simple-selection population 1 4)) => '(1 2 3 4 5)
   )
+
+
+(defn population-deltas
+  "Takes a collection of answers, extracts their scores, and returns the median-absolute-deviation for each score, measured over the enture population"
+  [answers]
+  (let [score-count (count (:scores (first answers)))]
+    (map (fn [s]
+            (median-absolute-deviation 
+              (map #(get-score % s) answers)))
+         (range score-count))))
+
+
+(fact "population-deltas"
+  (population-deltas population)   => '(1 1 0 1 1 1 2 3)
+  )
+
+
+
+;; Lee points out that when you are doing generational selection, the median-absolute-deviation only needs to be calculated on the entire population, not in the context of each selection event. This example assumes that you have already calculated the `population-deltas` for all answers, and passed those into the selection algorithm. If those values need more frequent calculation, for instance if you are using a steady-state or asynchronous search process, then simply recalculate the argument more often somewhere else.
+
+
+(def my-deltas (population-deltas population))
+
+
+(defn shuffled-indices [n] (shuffle (range n)))
 
 
 
 (defn epsilon-lexicase-selection
-  "Takes a population of individuals (`answers`), and an `epsilon` value (between 0 and 1). Applies lexicase selection to the population, applying `epsilon-simple-selection` in each cycle. Returns all answers that pass the filtering rounds."
-  [answers epsilon]
-  (let [score-count (count (:scores (first answers)))]
-    (loop [survivors   answers
-           criteria    (shuffle (range score-count))]
-      (cond (empty? criteria) survivors
-            (= 1 (count survivors)) survivors
-            :else
-              (let [criterion (first criteria)
-                    delta (epsilon-to-delta
-                            (map #(get-score % criterion) answers)
-                            epsilon)]
-                (recur (delta-simple-selection survivors criterion delta)
-                       (rest criteria)))))))
+  "Takes a population of individuals (`answers`), and a collection of `deltas`, which are population-dependent values of median-absolute-deviation for each score. Returns all answers that pass the filtering rounds."
+  ([answers]
+    (epsilon-lexicase-selection answers (population-deltas answers)))
+  ([answers deltas]
+    (let [score-count (count deltas)]
+      (loop [survivors   answers
+             criteria    (shuffled-indices score-count)]
+        (cond (empty? criteria) survivors
+              (= 1 (count survivors)) survivors
+              :else
+                (let [criterion (first criteria)
+                      delta     (nth deltas criterion)]
+                  (recur (sloppy-simple-selection survivors criterion delta)
+                         (rest criteria))))))))
               
 
-(fact "epsilon-lexicase-selection returns all answers when epsilon = 1"
-  (epsilon-lexicase-selection population 1) => population
+
+
+(fact "epsilon-lexicase-selection returns some answers"
+  (epsilon-lexicase-selection population my-deltas) => 
+      '({:genome 1, :scores [1 2 3 4 5 6 7 8]})
+    (provided (shuffled-indices 8) => [0 1 2]) ;; override randomness
+
+  (epsilon-lexicase-selection population my-deltas) => 
+      '({:genome 5, :scores [4 4 4 4 4 4 4 4]})
+    (provided (shuffled-indices 8) => [3 4 5]) ;; override randomness
+
+  (epsilon-lexicase-selection population my-deltas) => 
+      '({:genome 4, :scores [7 1 7 8 9 1 1 4]})
+    (provided (shuffled-indices 8) => [6 7 0]) ;; override randomness
+
+  (epsilon-lexicase-selection population my-deltas) => 
+      '({:genome 2, :scores [2 3 4 5 6 7 9 1]} 
+        {:genome 3, :scores [2 5 4 5 6 7 9 1]})
+    (provided (shuffled-indices 8) => [7 2 3 0]) ;; override randomness
   )
 
 
 
-
-(fact "epsilon-lexicase-selection returns only the 'best' answers when epsilon = 0"
-  (epsilon-lexicase-selection population 0) =>
-      '({:genome 2, :scores [2 3 4 5 6 7 9 1]} 
-        {:genome 3, :scores [2 5 4 5 6 7 9 1]})
-    
-    (provided (shuffle (range 8)) => [7]) ;; override lexicase shuffle
+(fact "epsilon-lexicase-selection accepts an explicit deltas vector"
+  (epsilon-lexicase-selection population [0 0 0 0 0 0 0 0]) => 
+      '({:genome 4, :scores [7 1 7 8 9 1 1 4]})
+    (provided (shuffled-indices 8) => [1]) ;; override randomness
 )
 
 
 
-(fact "epsilon-lexicase-selection returns successively filtered answers"
-  (epsilon-lexicase-selection population 0.7) => 
-      '({:genome 1, :scores [1 2 3 4 5 6 7 8]}
-        {:genome 2, :scores [2 3 4 5 6 7 9 1]} 
-        {:genome 4, :scores [7 1 7 8 9 1 1 4]})
-    
-    (provided (shuffle (range 8)) => [1]) ;; override lexicase shuffle
-
-
-  (epsilon-lexicase-selection population 0.7) =>
-       '({:genome 1, :scores [1 2 3 4 5 6 7 8]}
-         {:genome 2, :scores [2 3 4 5 6 7 9 1]})
-    (provided (shuffle (range 8)) => [1 0]) ;; override lexicase shuffle
-
-
-  (epsilon-lexicase-selection population 0.7) =>
-       '({:genome 2, :scores [2 3 4 5 6 7 9 1]})
-    (provided (shuffle (range 8)) => [1 0 7]) ;; override lexicase shuffle
-  )
-
-
-
-
-(def subtle-population
-  [ {:genome 1 :scores [1 2 3 4 5 6 7 8]}
-    {:genome 2 :scores [2 2 3 4 5 6 7 8]}
-    {:genome 3 :scores [2 3 3 4 5 6 7 8]}
-    {:genome 4 :scores [2 3 3 5 5 6 7 8]}
-    {:genome 5 :scores [2 3 3 5 6 6 7 8]}
-    ])
-
-
-
-
-(fact "additional tests just to understand it"
-  (epsilon-lexicase-selection subtle-population 0.7) => 
-    '({:genome 1, :scores [1 2 3 4 5 6 7 8]}
-      {:genome 2, :scores [2 2 3 4 5 6 7 8]}
-      {:genome 3, :scores [2 3 3 4 5 6 7 8]})
-
-    (provided (shuffle (range 8)) => [7 6 5 4 3]) ;; override lexicase shuffle
-
-
-  (epsilon-lexicase-selection subtle-population 0.7) => 
-    '({:genome 1, :scores [1 2 3 4 5 6 7 8]})
-
-    (provided (shuffle (range 8)) => [7 6 5 4 3 0]) ;; override lexicase shuffle
-
-
-  (epsilon-lexicase-selection subtle-population 0.7) => 
-    '({:genome 1, :scores [1 2 3 4 5 6 7 8]} 
-      {:genome 2, :scores [2 2 3 4 5 6 7 8]} 
-      {:genome 3, :scores [2 3 3 4 5 6 7 8]} 
-      {:genome 4, :scores [2 3 3 5 5 6 7 8]})
-
-    (provided (shuffle (range 8)) => [5 4]) ;; override lexicase shuffle
-  )
-
-
-(future-fact "repeated applications of epsilon-lexicase-selection provide insight into pseudo-elites"
-  (frequencies
-    (take 100000 (repeatedly #(epsilon-lexicase-selection population 0)))) => 
-      '{({:genome 4, :scores [7 1 7 8 9 1 1 4]}) 37807  
-        ({:genome 1, :scores [1 2 3 4 5 6 7 8]}) 30210 
-        ({:genome 5, :scores [4 4 4 4 4 4 4 4]}) 19549  
-        ({:genome 2, :scores [2 3 4 5 6 7 9 1]}) 12434}
-
-  (frequencies
-    (take 100000 (repeatedly #(epsilon-lexicase-selection population 0.25)))) => 
-      '{({:genome 2, :scores [2 3 4 5 6 7 9 1]}) 37526 
-        ({:genome 4, :scores [7 1 7 8 9 1 1 4]}) 30431
-        ({:genome 5, :scores [4 4 4 4 4 4 4 4]}) 18334 
-        ({:genome 1, :scores [1 2 3 4 5 6 7 8]}) 13709} 
-
-  (frequencies
-    (take 100000 (repeatedly #(epsilon-lexicase-selection population 0.5)))) => 
-      '{({:genome 5, :scores [4 4 4 4 4 4 4 4]}) 78524 
-        ({:genome 4, :scores [7 1 7 8 9 1 1 4]}) 11976 
-        ({:genome 2, :scores [2 3 4 5 6 7 9 1]}) 9500}
-
-  (frequencies
-    (take 100000 (repeatedly #(epsilon-lexicase-selection population 0.75)))) => 
-      '{
-        ({:genome 2, :scores [2 3 4 5 6 7 9 1]}
-         {:genome 3, :scores [2 5 4 5 6 7 9 1]}
-         {:genome 5, :scores [4 4 4 4 4 4 4 4]}) 56464 
-        ({:genome 5, :scores [4 4 4 4 4 4 4 4]}) 22903
-        ({:genome 1, :scores [1 2 3 4 5 6 7 8]}
-         {:genome 5, :scores [4 4 4 4 4 4 4 4]}) 11225
-        ({:genome 2, :scores [2 3 4 5 6 7 9 1]} 
-         {:genome 5, :scores [4 4 4 4 4 4 4 4]}) 9408}
-        )
-
+(fact "epsilon-lexicase-selection can be tuned via the deltas vector"
+  (epsilon-lexicase-selection population (take 8 (repeat 1000))) => population
+)
