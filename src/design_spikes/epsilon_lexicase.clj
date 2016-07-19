@@ -104,7 +104,7 @@
   )
 
 
-(defn population-deltas
+(defn mad-deltas
   "Takes a collection of answers, extracts their scores, and returns the median-absolute-deviation for each score, measured over the enture population"
   [answers]
   (let [score-count (count (:scores (first answers)))]
@@ -114,26 +114,25 @@
          (range score-count))))
 
 
-(fact "population-deltas"
-  (population-deltas population)   => '(1 1 0 1 1 1 2 3)
+(fact "mad-deltas"
+  (mad-deltas population)   => '(1 1 0 1 1 1 2 3)
   )
 
 
 
-;; Lee points out that when you are doing generational selection, the median-absolute-deviation only needs to be calculated on the entire population, not in the context of each selection event. This example assumes that you have already calculated the `population-deltas` for all answers, and passed those into the selection algorithm. If those values need more frequent calculation, for instance if you are using a steady-state or asynchronous search process, then simply recalculate the argument more often somewhere else.
+;; Lee points out that when you are doing generational selection, the median-absolute-deviation only needs to be calculated on the entire population, not in the context of each selection event. This example assumes that you have already calculated the vector of `deltas` for all answers, and passed those into the selection algorithm. If those values need more frequent calculation, for instance if you are using a steady-state or asynchronous search process, then simply recalculate the argument more often somewhere else.
 
 
-(def my-deltas (population-deltas population))
+(def my-deltas (mad-deltas population))
 
 
 (defn shuffled-indices [n] (shuffle (range n)))
 
 
-
 (defn epsilon-lexicase-selection
-  "Takes a population of individuals (`answers`), and a collection of `deltas`, which are population-dependent values of median-absolute-deviation for each score. Returns all answers that pass the filtering rounds."
+  "Takes a population of individuals (`answers`), and a collection of `deltas`, which should be calculated by some external function, and are used as absolute deviations permitted when considering almost-optimality. As a default, the `mad-deltas` function will be applied if no `deltas` collection is explicitly passed in. Returns all answers that pass the filtering rounds."
   ([answers]
-    (epsilon-lexicase-selection answers (population-deltas answers)))
+    (epsilon-lexicase-selection answers (mad-deltas answers)))
   ([answers deltas]
     (let [score-count (count deltas)]
       (loop [survivors   answers
