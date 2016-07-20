@@ -365,26 +365,38 @@
   (map #(get-score % score-index) answers))
 
 
-(defn purge-constants
-  "removes indices of score columns which are constant"
-  [answers score-indices]
-  (remove
-    #(= 1 (count (distinct (get-scores answers %)))) score-indices))
+(defn all-nearly-best?
+  "Takes a collection of numbers, and returns `true` if all the values are within `delta` of the smallest value"
+  [numbers delta]
+  (let [best (apply min numbers)]
+    (empty? (remove #(close-enough? best % delta) numbers))))
+
+
+(fact "all-nearly-best?"
+  (all-nearly-best? [0 1 2 3] 0) => false
+  (all-nearly-best? [0 1 2 3] 3) => true)
+
+
+(defn purge-ties
+  "removes indices of score columns which are constant; accepts an optional `deltas` collection, which is used to specify the acceptable range for each score, positionally, which counts as 'tied'"
+  [answers score-indices & {:keys [deltas] 
+                            :or {deltas (repeat 0)}}]
+  (remove #(all-nearly-best? (get-scores answers %) (nth deltas %)) score-indices))
 
 
 (fact 
-  (purge-constants boring [0 1 2 3 4 5 6 7]) => [0 1 2]
-  (purge-constants simple [0 1 2]) => [0 1 2]
-  (purge-constants population [0 1 2 3 4 5 6 7]) => [0 1 2 3 4 5 6 7]
-  (purge-constants (take 3 boring) [0 1 2 3 4 5 6 7]) => [0]
+  (purge-ties boring [0 1 2 3 4 5 6 7]) => [0 1 2]
+  (purge-ties simple [0 1 2]) => [0 1 2]
+  (purge-ties population [0 1 2 3 4 5 6 7]) => [0 1 2 3 4 5 6 7]
+  (purge-ties (take 3 boring) [0 1 2 3 4 5 6 7]) => [0]
   )
 
-(fact "purge-constants works when none are left"
-  (purge-constants identical [0 1 2]) => []
+(fact "purge-ties works when none are left"
+  (purge-ties identical [0 1 2]) => []
   )
 
 
-(fact "I can couple next-winning-answers and purge-constants"
+(fact "I can couple next-winning-answers and purge-ties"
   (next-winning-answers
     boring 
     zero-deltas
@@ -403,7 +415,7 @@
     boring 
     zero-deltas
     (range 5)
-    (purge-constants boring (range 8))) => 
+    (purge-ties boring (range 8))) => 
       [ (subset boring [2 3 4]), 
         (subset boring [0 1 2 4]), 
         (subset boring [0 1 2 3]) ]
@@ -430,13 +442,13 @@
         (take score-count (repeat 0)) 1 (range score-count))))
 
   ([survivors deltas]
-    (probs survivors deltas 1 (range (count deltas))))
+    (probs survivors deltas 1 (range (count (:scores (first survivors))))))
 
   ([survivors deltas total]
-    (probs survivors deltas total (range (count deltas))))
+    (probs survivors deltas total (range (count (:scores (first survivors))))))
 
   ([survivors deltas total criteria]
-    (let [useful-indices (purge-constants survivors criteria)
+    (let [useful-indices (purge-ties survivors criteria)
           breakdown      (next-winning-answers
                             survivors
                             deltas
@@ -466,7 +478,7 @@
 
 
 
-; ;; DON'T FORGET TO CHANGE purge-constants to take deltas into account
+; ;; DON'T FORGET TO CHANGE purge-ties to take deltas into account
 
 
 (fact "probabilities of selection can be calculated which match hand-calculation, and which include all genomes, and which sum to 1N"
@@ -506,12 +518,39 @@
   )
 
 
+(fact "probabilities of selection take into account `deltas`"
+  (probs simple [0 0 1]) => 
+    '{{:genome 1, :scores [1 2 3]} 1/3, 
+      {:genome 2, :scores [2 3 1]} 1/6, 
+      {:genome 3, :scores [3 1 2]} 1/2}
+  (apply + (vals (probs simple [0 0 1]))) => 1
+
+  (probs simple [1 0 1]) => 
+    '{{:genome 1, :scores [1 2 3]} 1/6, 
+      {:genome 2, :scores [2 3 1]} 1/6, 
+      {:genome 3, :scores [3 1 2]} 2/3}
+  (apply + (vals (probs simple [1 0 1]))) => 1
+
+  (probs simple [1 1 1]) => 
+    '{{:genome 1, :scores [1 2 3]} 1/6, 
+      {:genome 2, :scores [2 3 1]} 1/6, 
+      {:genome 3, :scores [3 1 2]} 2/3}
+  (apply + (vals (probs simple [1 0 1]))) => 1
+)
+
+
+
+
+
+
+
+
 (fact "I can pass in a bigdec probability and expect it to work, at least in a with-precision block"
-  (with-precision 40 (probs identical zero-deltas 1M)) => 
+  (with-precision 40 (probs identical (repeat 0) 1M)) => 
     '{{:genome 1, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M,  
       {:genome 2, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M, 
       {:genome 3, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M}
-  (apply + (vals (probs identical zero-deltas 1))) => 1
+  (apply + (vals (probs identical (repeat 0) 1))) => 1
   )
 
 
@@ -524,26 +563,16 @@
 
 
 (fact "random-fake-answer"
-  (count (:scores (random-fake-answer 99 10))) => 10
-  )
+  (count (:scores (random-fake-answer 99 100))) => 100)
 
 
 (def big-scores-100
-  (map #(random-fake-answer % 10) (range 100)))
+  (map #(random-fake-answer % 100) (range 100)))
 
 
 (future-fact "probs works for large populations without breaking; activate this test to see it work"
 
-  (probs big-scores-100 (take 10 (repeat 0)) 1) => 
-
-  '{{:genome 0, :scores [45 80 28 5 92 67 81 87 21 11]}  1/5, 
-    {:genome 6, :scores [89 96 66 12 29 7 51 17 76 65]}  0, 
-    {:genome 9, :scores [12 19 22 61 44 19 82 53 2 98]}  1/10, 
-    {:genome 7, :scores [13 11 49 23 26 45 8 55 39 38]}  0, 
-    {:genome 3, :scores [70 8 95 25 69 39 63 5 23 35]}   1/5, 
-    {:genome 2, :scores [89 37 43 98 62 78 30 66 25 77]} 0, 
-    {:genome 1, :scores [4 70 8 42 51 35 93 68 93 65]}   7/45, 
-    {:genome 8, :scores [4 13 86 60 91 99 20 38 84 99]}  2/45, 
-    {:genome 4, :scores [11 49 97 46 26 75 3 29 32 39]}  1/10, 
-    {:genome 5, :scores [20 79 27 41 18 4 31 77 29 80]}  1/5}
+  (time (sort (vals (probs big-scores-100)))) => 99
   )
+
+
