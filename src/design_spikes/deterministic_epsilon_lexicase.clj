@@ -185,71 +185,52 @@
 ;;;;;;;;;;;;;;;;; probabilistic
 
 (def population
-  [ {:genome 1 :scores [1 2 3 4 5 6 7 8]}
-    {:genome 2 :scores [2 3 4 5 6 7 9 1]}
-    {:genome 3 :scores [2 5 4 5 6 7 9 1]}
-    {:genome 4 :scores [7 1 7 8 9 1 1 4]}
-    {:genome 5 :scores [4 4 4 4 4 4 4 4]}
+  [ {:genome 0 :scores [1 2 3 4 5 6 7 8]}
+    {:genome 1 :scores [2 3 4 5 6 7 9 1]}
+    {:genome 2 :scores [2 5 4 5 6 7 9 1]}
+    {:genome 3 :scores [7 1 7 8 9 1 1 4]}
+    {:genome 4 :scores [4 4 4 4 4 4 4 4]}
     ])
 
 
-(defn lexicase-selected?
-  "Takes a collection of answers (each of which has scores), an index of an answer to use, an index of a score to use, and a single delta value. Returns `true` if that answer would be selected on that score with that delta (slack)."
-  [answers answer-idx score-idx delta]
-  (let [scores (map #(get-score % score-idx) answers)
-        best   (apply min scores)]
-    (close-enough? (nth scores answer-idx) best delta)))
-
-
-(fact "lexicase-selected?"
-  (lexicase-selected? population 0 0 0) => true
-  (lexicase-selected? population 1 0 0) => false
-  (lexicase-selected? population 2 0 1) => true
-  (lexicase-selected? population 3 0 1) => false
-  (lexicase-selected? population 4 0 1) => false
-  (lexicase-selected? population 4 0 3) => true
-  )
-
-
 (defn winning-answers
-  "Takes a collection of answers (each of which has scores), an index of a score to use, and a single delta value. Returns the indices of answers which will be selected by the indexed score; that is, 'bests'."
+  "Takes a collection of answers (each of which has scores), an index of a score to use, and a single delta value. Returns the answers which will be selected by the indexed score; that is, 'bests'."
   [answers score-idx delta]
   (let [scores (map #(get-score % score-idx) answers)
         best   (apply min scores)]
     (filter 
-      #(close-enough? (get-score (nth answers %) score-idx) best delta)
-      (range (count answers)))))
+      #(close-enough? (get-score % score-idx) best delta)
+      answers)))
 
 
 (fact "single results from winning-answers"
-  (winning-answers population 0 0) => [0]
-  (winning-answers population 1 0) => [3]
-  (winning-answers population 2 0) => [0]
-  (winning-answers population 3 0) => [0 4]
-  (winning-answers population 4 0) => [4]
-  (winning-answers population 5 0) => [3]
-  (winning-answers population 6 0) => [3]
-  (winning-answers population 7 0) => [1 2]
+  (map :genome (winning-answers population 0 0)) => [0]
+  (map :genome (winning-answers population 1 0)) => [3]
+  (map :genome (winning-answers population 2 0)) => [0]
+  (map :genome (winning-answers population 3 0)) => [0 4]
+  (map :genome (winning-answers population 4 0)) => [4]
+  (map :genome (winning-answers population 5 0)) => [3]
+  (map :genome (winning-answers population 6 0)) => [3]
+  (map :genome (winning-answers population 7 0)) => [1 2]
   )
 
 
 (fact "winning-answers with various delta values"
-  (map #(winning-answers population % 0) (range 8)) => 
+  (map #(map :genome (winning-answers population % 0)) (range 8)) => 
     '((0)     (3)     (0)       (0 4)     (4)       (3) (3) (1 2))
-  (map #(winning-answers population % 1) (range 8)) => 
+  (map #(map :genome (winning-answers population % 1)) (range 8)) => 
     '((0 1 2) (0 3)   (0 1 2 4) (0 1 2 4) (0 4)     (3) (3) (1 2))
-  (map #(winning-answers population % 2) (range 8)) => 
+  (map #(map :genome (winning-answers population % 2)) (range 8)) => 
     '((0 1 2) (0 1 3) (0 1 2 4) (0 1 2 4) (0 1 2 4) (3) (3) (1 2))
 )
 
 
 (defn next-winning-answers
   [answers deltas answer-indices score-indices]
-  (zipmap
-    score-indices
+  (let [which-answers (map #(nth answers %) answer-indices)]
     (map
       #(winning-answers 
-        (map (fn [i] (nth answers i)) answer-indices)
+        which-answers
         %
         (nth deltas %)) score-indices)))
 
@@ -257,19 +238,42 @@
 (def zero-deltas (take 8 (repeat 0)))
 (def one-deltas (take 8 (repeat 1)))
 
+
+(defn subset
+  [answers indices]
+  (map #(nth answers %) indices))
+
+
 (fact "next-winning-answers does the same as winning-answers mapped"
   (next-winning-answers population zero-deltas (range 5) (range 8)) => 
-    '{0 (0), 1 (3), 2 (0), 3 (0 4), 4 (4), 5 (3), 6 (3), 7 (1 2)}
+     [ [(nth population 0)],
+       [(nth population 3)],
+       [(nth population 0)],
+       [(nth population 0) (nth population 4)],
+       [(nth population 4)],
+       [(nth population 3)],
+       [(nth population 3)],
+       [(nth population 1) (nth population 2)] ]
   (next-winning-answers population one-deltas (range 5) (range 8)) => 
-    '{0 (0 1 2), 1 (0 3), 2 (0 1 2 4), 3 (0 1 2 4), 4 (0 4), 5 (3), 6 (3), 7 (1 2)}
+     [ (subset population [0 1 2]), 
+       (subset population [0 3]), 
+       (subset population [0 1 2 4]), 
+       (subset population [0 1 2 4]), 
+       (subset population [0 4]), 
+       (subset population [3]),
+       (subset population [3]), 
+       (subset population [1 2]) ]
   )
 
 
 (fact "next-winning-answers can handle complex score index lists"
   (next-winning-answers population zero-deltas (range 5) [0]) => 
-    '{0 (0)}
+    [ (subset population [0]) ]
   (next-winning-answers population one-deltas (range 5) [0 2 4 5]) => 
-    '{0 (0 1 2), 2 (0 1 2 4), 4 (0 4), 5 (3)}
+    [ (subset population [0 1 2]),
+      (subset population [0 1 2 4]),
+      (subset population [0 4]), 
+      (subset population [3]) ]
     )
 
 
@@ -277,14 +281,6 @@
 ;; if there are multiple winners, but you're out of criteria, you're done. Return a hash with 1/c probabilities for each answer.
 ;; if there are multiple winners, but there are still criteria unexplored, dive down by removing all non-winners from the answers, and the next criterion on the list; when a hash of probabilities comes back, merge it in
 
-
-(def population
-  [ {:genome 1 :scores [1 2 3 4 5 6 7 8]}
-    {:genome 2 :scores [2 3 4 5 6 7 9 1]}
-    {:genome 3 :scores [2 5 4 5 6 7 9 1]}
-    {:genome 4 :scores [7 1 7 8 9 1 1 4]}
-    {:genome 5 :scores [4 4 4 4 4 4 4 4]}
-    ])
 
 
 ;; '{0 (0), 1 (3), 2 (0), 3 (0 4), 4 (4), 5 (3), 6 (3), 7 (1 2)}
@@ -320,16 +316,16 @@
 
 ;;        0    1    2    3    4    5    6    7
 ;;  0    1/8       1/8  3/56
-;;  1                                       1/16
-;;  2                                       1/16
+;;  1                                       1/8
+;;  2                                        0
 ;;  3         1/8                 1/8  1/8
 ;;  4                   1/14 1/8
 
 
 ;;        0    1    2    3    4    5    6    7
 ;;  0    1/8       1/8  3/56                       = 17/56
-;;  1                                       1/16   =  1/16
-;;  2                                       1/16   =  1/16
+;;  1                                       1/8    =  1/8
+;;  2                                       0      =  0
 ;;  3         1/8                 1/8  1/8         =  3/8
 ;;  4                   1/14 1/8                   = 11/56
 
@@ -343,13 +339,20 @@
     ])
 
 
+(def simple
+  [ {:genome 1 :scores [1 2 3]}
+    {:genome 2 :scores [2 3 1]}
+    {:genome 3 :scores [3 1 2]}
+    ])
+
+
 (defn get-scores
   [answers score-index]
   (map #(get-score % score-index) answers))
 
 
 (defn purge-constants
-  "removes indexes of score columns which are constant"
+  "removes indices of score columns which are constant"
   [answers score-indices]
   (remove
     #(= 1 (count (distinct (get-scores answers %)))) score-indices))
@@ -357,6 +360,7 @@
 
 (fact 
   (purge-constants boring [0 1 2 3 4 5 6 7]) => [0 1 2]
+  (purge-constants simple [0 1 2]) => [0 1 2]
   (purge-constants population [0 1 2 3 4 5 6 7]) => [0 1 2 3 4 5 6 7]
   (purge-constants (take 3 boring) [0 1 2 3 4 5 6 7]) => [0]
   )
@@ -367,55 +371,247 @@
     boring 
     zero-deltas
     (range 5)
-    (range 8)) => '{0 (2 3 4), 1 (0 1 2 4), 2 (0 1 2 3), 3 (0 1 2 3 4), 4 (0 1 2 3 4), 5 (0 1 2 3 4), 6 (0 1 2 3 4), 7 (0 1 2 3 4)}
-
+    (range 8)) => 
+      [ (subset boring [2 3 4]), 
+        (subset boring [0 1 2 4]), 
+        (subset boring [0 1 2 3]), 
+        (subset boring [0 1 2 3 4]), 
+        (subset boring [0 1 2 3 4]), 
+        (subset boring [0 1 2 3 4]), 
+        (subset boring [0 1 2 3 4]), 
+        (subset boring [0 1 2 3 4]) ]
 
   (next-winning-answers
     boring 
     zero-deltas
     (range 5)
-    (purge-constants boring (range 8))) => '{0 (2 3 4), 1 (0 1 2 4), 2 (0 1 2 3)}
-  )
+    (purge-constants boring (range 8))) => 
+      [ (subset boring [2 3 4]), 
+        (subset boring [0 1 2 4]), 
+        (subset boring [0 1 2 3]) ]
+        )
 
 
-(fact 
-  (purge-constants
-    (map #(nth population %) [0 4])
-    '(0 1 2)) => '(0 1 2))
+(defn collapse-probabilities
+  [parent new-probs]
+    (merge-with + parent new-probs))
 
-
-(defn probs
-  [answers deltas answer-indices score-indices total]
-  (loop [survivors answer-indices
-         criteria score-indices]
-      (let [competitors (map #(nth answers %) survivors)
-          breakdown   (next-winning-answers
-                        answers
-                        deltas
-                        survivors
-                        (purge-constants competitors criteria))]
-
-
-      (if (= 1 (count criteria))
-        (zipmap survivors (repeat (* total (/ 1 (count survivors)))))
-      (reduce-kv
-        (fn [m k v]
-          (assoc m k
-            (cond (= 1 (count v))
-                    (* total (/ 1 (count criteria)))
-                :else
-                  (probs answers deltas v (remove #{k} criteria) (/ 1 (count survivors)))
-            )))
-        {}
-        breakdown)))
-  ))
-
-;; DON'T FORGET TO CHANGE purge-constants to take deltas into account
 
 
 (fact
-  (probs population zero-deltas (range 5) (range 8) 1) => 
-      '{0 1/8, 1 1/8, 2 1/8, 3 (0 4), 4 1/8, 5 1/8, 6 1/8, 7 (1 2)}
+  (collapse-probabilities {} {1 1/2 2 2/3}) => {1 1/2, 2 2/3}
+  (collapse-probabilities {1 1/2 2 2/3} {1 1/12 2 2/13}) => {1 7/12, 2 32/39}
+  (collapse-probabilities {:a 1/2 :b 2/3} {:a 1/12 :b 2/13}) => {:a 7/12, :b 32/39}
+  )
 
+
+
+
+
+
+
+;;  [(nth population 0)],
+       ; [(nth population 3)],
+       ; [(nth population 0)],
+       ; [(nth population 0) (nth population 4)],
+       ; [(nth population 4)],
+       ; [(nth population 3)],
+       ; [(nth population 3)],
+       ; [(nth population 1) (nth population 2)] ]
+
+
+
+(defn probs
+  [answers deltas score-indices total]
+  (let [survivors   answers
+        criteria    score-indices
+        breakdown   (next-winning-answers
+                      survivors
+                      deltas
+                      (range (count survivors))
+                      (purge-constants survivors criteria))
+        working-criteria (count (purge-constants survivors criteria))
+        nobody (zipmap answers (repeat 0))]
+
+    (reduce
+      collapse-probabilities
+      nobody
+      (map-indexed
+        (fn [idx winners]
+          (collapse-probabilities
+            {}
+            (cond
+              (and (< working-criteria 2) (> (count winners) 1))
+                (do  ;; tie with no winner
+                  (println (str "TIE: " (into [] winners) 
+                                " prob " (/ total (count winners) )))
+                  (zipmap winners (repeat (/ total (count winners)))))
+
+              (< working-criteria 2)
+                (do  
+                  (println (str "DEFAULT WINNER: "
+                            (first winners)
+                            " prob "
+                            total))
+                  {(first winners) total})
+
+
+              (< (count winners) 2)
+                (do  ;; clear winner
+                  (println (str "WINNER " (into [] winners))  " prob " total)
+                  {(first winners) total})
+
+
+              :else
+                (do (println (str "\nwinners : "
+                                  (into [] winners)
+                                  " subtree: " 
+                                  (into []
+                                    (remove #{idx} (purge-constants survivors criteria)))
+                                  " prob "
+                                  (/ total working-criteria)
+                                  ))
+
+                (probs winners
+                       deltas
+                       (remove #{idx} (purge-constants survivors criteria))
+                       (/ total working-criteria)))
+              )))
+        breakdown)
+  )))
+
+
+; ;; DON'T FORGET TO CHANGE purge-constants to take deltas into account
+
+
+(fact
+  (next-winning-answers boring zero-deltas (range 5) (range 8)) => 
+   (list (subset boring [2 3 4])
+    (subset boring [0 1 2 4]) 
+    (subset boring [0 1 2 3])
+    boring 
+    boring 
+    boring 
+    boring
+    boring))
+
+
+;; WINNERS OF boring: '{0 (2 3 4), 1 (0 1 2 4), 2 (0 1 2 3), 3 (0 1 2 3 4), 4 (0 1 2 3 4), 5 (0 1 2 3 4), 6 (0 1 2 3 4), 7 (0 1 2 3 4)}
+
+(def boring
+  [ {:genome 1 :scores [2 2 3 4 5 6 7 8]}
+    {:genome 2 :scores [3 2 3 4 5 6 7 8]}
+    {:genome 3 :scores [1 2 3 4 5 6 7 8]}
+    {:genome 4 :scores [1 3 3 4 5 6 7 8]}
+    {:genome 5 :scores [1 2 4 4 5 6 7 8]}
+    ])
+
+;;        0    1    2    3    4    5    6    7
+;;  0          *    *    X    X    X    X    X  (X=discarded)
+;;  1          *    *    X    X    X    X    X
+;;  2     *    *    *    X    X    X    X    X
+;;  3     *         *    X    X    X    X    X
+;;  4     *    *         X    X    X    X    X
+;;       1/3  1/3  1/3   0    0    0    0    0
+
+;; 0:   1/3      
+;;        0    1    2    
+;;  2     X    *    *
+;;  3     X         *
+;;  4     X    *     
+
+
+;; 01:  1/6       
+;;        0    1    2    
+;;  2     X    X   1/6  =  1/6
+;;  4     X    X
+        
+
+;; 02:  1/6
+;;        0    1    2    
+;;  2     X   1/6   X   = 1/6
+;;  3     X         X
+
+
+;; 1:  1/3
+;;        0    1    2   
+;;  0          X    *   
+;;  1          X    *   
+;;  2     *    X    *   
+;;  4     *    X        
+
+
+;; 10:  1/6
+;;        0    1    2   
+;;  2     X    X    *  = 1/6  
+;;  4     X    X        
+
+
+;; 12:  1/6
+;;        0    1    2   
+;;  0          X    X   
+;;  1          X    X   
+;;  2     *    X    X   = 1/6
+
+;; 2:  1/3
+;;        0    1    2 
+;;  0          *    X 
+;;  1          *    X 
+;;  2     *    *    X 
+;;  3     *         X 
+
+
+;; 20:  1/6
+;;        0    1    2 
+;;  2     X         X 
+;;  3     X    *    X   = 1/6
+
+
+;; 21:  1/6
+;;        0    1    2 
+;;  0          X    X 
+;;  1          X    X 
+;;  2     *    X    X   = 1/6
+
+
+(fact
+  (probs simple zero-deltas (range 3) 1) => 
+    '{{:genome 1, :scores [1 2 3]} 1/3,  
+      {:genome 2, :scores [2 3 1]} 1/3, 
+      {:genome 3, :scores [3 1 2]} 1/3}
+  (apply + (vals (probs simple zero-deltas (range 3) 1))) => 1
+
+
+  (probs simple zero-deltas [0] 1) => 
+    '{{:genome 1, :scores [1 2 3]} 1, 
+      {:genome 2, :scores [2 3 1]} 0, 
+      {:genome 3, :scores [3 1 2]} 0}
+  (apply + (vals (probs simple zero-deltas [0] 1))) => 1
+
+
+  (probs (subset population [0 4]) zero-deltas [0 1 2 4 5 6 7] 1/8) => 
+    '{{:genome 0, :scores [1 2 3 4 5 6 7 8]} 3/56, 
+      {:genome 4, :scores [4 4 4 4 4 4 4 4]} 1/14}
+
+
+
+
+  (probs population zero-deltas (range 8) 1) => 
+    '{{:genome 0, :scores [1 2 3 4 5 6 7 8]} 17/56, 
+      {:genome 1, :scores [2 3 4 5 6 7 9 1]} 1/8, 
+      {:genome 2, :scores [2 5 4 5 6 7 9 1]} 0, 
+      {:genome 3, :scores [7 1 7 8 9 1 1 4]} 3/8, 
+      {:genome 4, :scores [4 4 4 4 4 4 4 4]} 11/56}
+  (apply + (vals (probs population zero-deltas (range 8) 1))) => 1
+
+
+
+  (probs boring zero-deltas (range 8) 1) => 
+    '{{:genome 1, :scores [2 2 3 4 5 6 7 8]} 0, 
+      {:genome 2, :scores [3 2 3 4 5 6 7 8]} 0, 
+      {:genome 3, :scores [1 2 3 4 5 6 7 8]} 1, 
+      {:genome 4, :scores [1 3 3 4 5 6 7 8]} 0, 
+      {:genome 5, :scores [1 2 4 4 5 6 7 8]} 0}
+  (apply + (vals (probs boring zero-deltas (range 8) 1))) => 1N
 
 )
