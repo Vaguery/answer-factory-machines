@@ -415,7 +415,6 @@
     (merge-with + parent new-probs))
 
 
-
 (fact
   (collapse-probabilities {} {1 1/2 2 2/3}) => {1 1/2, 2 2/3}
   (collapse-probabilities {1 1/2 2 2/3} {1 1/12 2 2/13}) => {1 7/12, 2 32/39}
@@ -423,24 +422,18 @@
   )
 
 
-
-
-
-
-
-;;  [(nth population 0)],
-       ; [(nth population 3)],
-       ; [(nth population 0)],
-       ; [(nth population 0) (nth population 4)],
-       ; [(nth population 4)],
-       ; [(nth population 3)],
-       ; [(nth population 3)],
-       ; [(nth population 1) (nth population 2)] ]
-
-
 (defn probs
+  "Calculate the absolute probabilities of selecting each individual from a collection, where it is assumed each individual contains a `vector` (as such!) called `:scores` which contains all the values measured. A collection of `deltas` can be passed in, one for each `:score` value, matching positionally to indicate the range of numerical values for that score acceptable as 'best'. A `total` value can also be passed in, representing the total probability being shared among the answers (useful for recursion, or testing)."
+  ([survivors]
+    (let [score-count (count (:scores (first survivors)))]
+      (probs survivors 
+        (take score-count (repeat 0)) 1 (range score-count))))
+
+  ([survivors deltas]
+    (probs survivors deltas 1 (range (count deltas))))
+
   ([survivors deltas total]
-    (probs survivors deltas total (range (count (:scores (first survivors))))))
+    (probs survivors deltas total (range (count deltas))))
 
   ([survivors deltas total criteria]
     (let [useful-indices (purge-constants survivors criteria)
@@ -477,11 +470,11 @@
 
 
 (fact "probabilities of selection can be calculated which match hand-calculation, and which include all genomes, and which sum to 1N"
-  (probs simple zero-deltas 1) => 
+  (probs simple) => 
     '{{:genome 1, :scores [1 2 3]} 1/3,  
       {:genome 2, :scores [2 3 1]} 1/3, 
       {:genome 3, :scores [3 1 2]} 1/3}
-  (apply + (vals (probs simple zero-deltas 1))) => 1
+  (apply + (vals (probs simple))) => 1
 
   (probs simple zero-deltas 1 [0]) => 
     '{{:genome 1, :scores [1 2 3]} 1, 
@@ -489,25 +482,68 @@
       {:genome 3, :scores [3 1 2]} 0}
   (apply + (vals (probs simple zero-deltas 1 [0]))) => 1
 
-  (probs population zero-deltas 1) => 
+  (probs population) => 
     '{{:genome 0, :scores [1 2 3 4 5 6 7 8]} 17/56, 
       {:genome 1, :scores [2 3 4 5 6 7 9 1]} 1/8, 
       {:genome 2, :scores [2 5 4 5 6 7 9 1]} 0, 
       {:genome 3, :scores [7 1 7 8 9 1 1 4]} 3/8, 
       {:genome 4, :scores [4 4 4 4 4 4 4 4]} 11/56}
-  (apply + (vals (probs population zero-deltas 1))) => 1
+  (apply + (vals (probs population))) => 1
 
-  (probs boring zero-deltas 1) => 
+  (probs boring) => 
     '{{:genome 1, :scores [2 2 3 4 5 6 7 8]} 0, 
       {:genome 2, :scores [3 2 3 4 5 6 7 8]} 0, 
       {:genome 3, :scores [1 2 3 4 5 6 7 8]} 11/12, 
       {:genome 4, :scores [1 3 3 4 5 6 7 8]} 1/12, 
       {:genome 5, :scores [1 2 4 4 5 6 7 8]} 0}
-  (apply + (vals (probs boring zero-deltas 1))) => 1
+  (apply + (vals (probs boring))) => 1
 
-  (probs identical zero-deltas 1) => 
+  (probs identical) => 
     '{{:genome 1, :scores [1 1 1]} 1/3,  
       {:genome 2, :scores [1 1 1]} 1/3, 
       {:genome 3, :scores [1 1 1]} 1/3}
+  (apply + (vals (probs identical))) => 1
+  )
+
+
+(fact "I can pass in a bigdec probability and expect it to work, at least in a with-precision block"
+  (with-precision 40 (probs identical zero-deltas 1M)) => 
+    '{{:genome 1, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M,  
+      {:genome 2, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M, 
+      {:genome 3, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M}
   (apply + (vals (probs identical zero-deltas 1))) => 1
+  )
+
+
+
+;; exploring a bit
+
+(defn random-fake-answer
+  [genome numscores]
+  {:genome genome :scores (into [] (take numscores (repeatedly #(rand-int 100))))})
+
+
+(fact "random-fake-answer"
+  (count (:scores (random-fake-answer 99 10))) => 10
+  )
+
+
+(def big-scores-100
+  (map #(random-fake-answer % 10) (range 100)))
+
+
+(future-fact "probs works for large populations without breaking; activate this test to see it work"
+
+  (probs big-scores-100 (take 10 (repeat 0)) 1) => 
+
+  '{{:genome 0, :scores [45 80 28 5 92 67 81 87 21 11]}  1/5, 
+    {:genome 6, :scores [89 96 66 12 29 7 51 17 76 65]}  0, 
+    {:genome 9, :scores [12 19 22 61 44 19 82 53 2 98]}  1/10, 
+    {:genome 7, :scores [13 11 49 23 26 45 8 55 39 38]}  0, 
+    {:genome 3, :scores [70 8 95 25 69 39 63 5 23 35]}   1/5, 
+    {:genome 2, :scores [89 37 43 98 62 78 30 66 25 77]} 0, 
+    {:genome 1, :scores [4 70 8 42 51 35 93 68 93 65]}   7/45, 
+    {:genome 8, :scores [4 13 86 60 91 99 20 38 84 99]}  2/45, 
+    {:genome 4, :scores [11 49 97 46 26 75 3 29 32 39]}  1/10, 
+    {:genome 5, :scores [20 79 27 41 18 4 31 77 29 80]}  1/5}
   )
