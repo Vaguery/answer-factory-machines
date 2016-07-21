@@ -311,10 +311,6 @@
       (subset simple [1 2])]
   )
 
-;;   0 1 2
-;; 0 * * 
-;; 1 *   *
-;; 2   * *
 
 (defn get-scores
   [answers score-index]
@@ -401,18 +397,13 @@
 
 (defn probs
   "Calculate the absolute probabilities of selecting each individual from a collection, where it is assumed each individual contains a `vector` (as such!) called `:scores` which contains all the values measured. A collection of `deltas` can be passed in, one for each `:score` value, matching positionally to indicate the range of numerical values for that score acceptable as 'best'. A `total` value can also be passed in, representing the total probability being shared among the answers (useful for recursion, or testing)."
-  ([survivors]
-    (let [score-count (count (:scores (first survivors)))]
-      (probs survivors 
-        (take score-count (repeat 0)) 1 (range score-count))))
-
-  ([survivors deltas]
-    (probs survivors deltas 1 (range (count (:scores (first survivors))))))
-
-  ([survivors deltas total]
-    (probs survivors deltas total (range (count (:scores (first survivors))))))
-
-  ([survivors deltas total criteria]
+  [survivors & 
+    {:keys [deltas
+            total
+            criteria] 
+     :or   {deltas   (repeat 0)
+            total    1
+            criteria (range (count (:scores (first survivors))))}}]
     (let [useful-indices (purge-ties survivors criteria)
           breakdown      (next-winning-answers
                             survivors
@@ -426,8 +417,8 @@
         (zipmap survivors (repeat (/ total (count survivors))))
         (reduce
           collapse-probabilities
-          
-          (map-indexed
+      
+          (map
             (fn [idx winners]
               (collapse-probabilities
                 nobody
@@ -436,16 +427,14 @@
                       :else
                         (let [drop-one (nth useful-indices idx)] 
                         (probs winners
-                               deltas
-                               (/ total active-criteria)
-                               (remove #{drop-one} useful-indices)
+                               :deltas deltas
+                               :total (/ total active-criteria)
+                               :criteria (remove #{drop-one} useful-indices)
                                )))))
+            (iterate inc 0)
             breakdown
-            ))))))
+            )))))
 
-
-
-; ;; DON'T FORGET TO CHANGE purge-ties to take deltas into account
 
 
 (fact "probabilities of selection can be calculated which match hand-calculation, and which include all genomes, and which sum to 1N"
@@ -455,11 +444,11 @@
       {:genome 3, :scores [3 1 2]} 1/3}
   (apply + (vals (probs simple))) => 1
 
-  (probs simple zero-deltas 1 [0]) => 
+  (probs simple :criteria [0]) => 
     '{{:genome 1, :scores [1 2 3]} 1, 
       {:genome 2, :scores [2 3 1]} 0, 
       {:genome 3, :scores [3 1 2]} 0}
-  (apply + (vals (probs simple zero-deltas 1 [0]))) => 1
+  (apply + (vals (probs simple :criteria [0]))) => 1
 
   (probs population) => 
     '{{:genome 0, :scores [1 2 3 4 5 6 7 8]} 17/56, 
@@ -467,7 +456,9 @@
       {:genome 2, :scores [2 5 4 5 6 7 9 1]} 0, 
       {:genome 3, :scores [7 1 7 8 9 1 1 4]} 3/8, 
       {:genome 4, :scores [4 4 4 4 4 4 4 4]} 11/56}
+
   (apply + (vals (probs population))) => 1
+
 
   (probs boring) => 
     '{{:genome 1, :scores [2 2 3 4 5 6 7 8]} 0, 
@@ -475,35 +466,43 @@
       {:genome 3, :scores [1 2 3 4 5 6 7 8]} 1, 
       {:genome 4, :scores [1 3 3 4 5 6 7 8]} 0, 
       {:genome 5, :scores [1 2 4 4 5 6 7 8]} 0}
+
   (apply + (vals (probs boring))) => 1
+
 
   (probs identical) => 
     '{{:genome 1, :scores [1 1 1]} 1/3,  
       {:genome 2, :scores [1 1 1]} 1/3, 
       {:genome 3, :scores [1 1 1]} 1/3}
-  (apply + (vals (probs identical))) => 1
-  )
+
+  (apply + (vals (probs identical))) => 1)
+
+
 
 
 (fact "probabilities of selection take into account `deltas`"
-  (probs simple [0 0 1]) => 
+  (probs simple :deltas [0 0 1]) => 
     '{{:genome 1, :scores [1 2 3]} 1/3, 
       {:genome 2, :scores [2 3 1]} 1/6, 
       {:genome 3, :scores [3 1 2]} 1/2}
-  (apply + (vals (probs simple [0 0 1]))) => 1
 
-  (probs simple [1 0 1]) => 
+  (apply + (vals (probs simple :deltas [0 0 1]))) => 1
+
+
+  (probs simple :deltas [1 0 1]) => 
     '{{:genome 1, :scores [1 2 3]} 1/6, 
       {:genome 2, :scores [2 3 1]} 1/6, 
       {:genome 3, :scores [3 1 2]} 2/3}
-  (apply + (vals (probs simple [1 0 1]))) => 1
 
-  (probs simple [0 0 0]) => 
+  (apply + (vals (probs simple :deltas [1 0 1]))) => 1
+
+
+  (probs simple :deltas [0 0 0]) => 
     '{{:genome 1, :scores [1 2 3]} 1/3, 
       {:genome 2, :scores [2 3 1]} 1/3, 
       {:genome 3, :scores [3 1 2]} 1/3}
-  (apply + (vals (probs simple [1 0 1]))) => 1
 
+  (apply + (vals (probs simple :deltas [1 0 1]))) => 1
 
 
   (def sloppy  ;; like simple with deltas = [1 1 1]
@@ -513,41 +512,37 @@
       ])
 
 
-
-  (probs sloppy [0 0 0]) => 
+  (probs sloppy :deltas [0 0 0]) => 
     '{{:genome 1, :scores [1 1 3]} 1/3, 
       {:genome 2, :scores [1 3 1]} 1/3, 
       {:genome 3, :scores [3 1 1]} 1/3}
-  (apply + (vals (probs sloppy [0 0 0]))) => 1
+
+  (apply + (vals (probs sloppy :deltas [0 0 0]))) => 1
 
 
-
-  (probs simple [1 1 1]) => 
+  (probs simple :deltas [1 1 1]) => 
     '{{:genome 1, :scores [1 2 3]} 1/3, 
       {:genome 2, :scores [2 3 1]} 1/3, 
       {:genome 3, :scores [3 1 2]} 1/3}
-  (apply + (vals (probs simple [1 1 1]))) => 1
 
-  (probs simple [2 2 2]) => 
+  (apply + (vals (probs simple :deltas [1 1 1]))) => 1
+
+
+  (probs simple :deltas [2 2 2]) => 
     '{{:genome 1, :scores [1 2 3]} 1/3, 
       {:genome 2, :scores [2 3 1]} 1/3, 
       {:genome 3, :scores [3 1 2]} 1/3}
-  (apply + (vals (probs simple [1 1 1]))) => 1
+  
+  (apply + (vals (probs simple :deltas [1 1 1]))) => 1
 )
 
 
 
-
-
-
-
-
 (fact "I can pass in a bigdec probability and expect it to work, at least in a with-precision block"
-  (with-precision 40 (probs identical (repeat 0) 1M)) => 
+  (with-precision 40 (probs identical :total 1M)) => 
     '{{:genome 1, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M,  
       {:genome 2, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M, 
       {:genome 3, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M}
-  (apply + (vals (probs identical (repeat 0) 1))) => 1
   )
 
 
@@ -567,7 +562,7 @@
   (map #(random-fake-answer % 100) (range 100)))
 
 
-(fact "probs works for large populations without breaking; activate this test to see it work"
+(future-fact "probs works for large populations without breaking; activate this test to see it work"
   (let [results (probs big-scores-100)]
     (vals results) => 99
     (count (remove #{0} (vals results))) => 99
