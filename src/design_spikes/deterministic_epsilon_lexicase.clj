@@ -303,62 +303,18 @@
       (subset population [3]) ]
     )
 
+(fact "next-winning-answers handles an odd edge case"
+  (next-winning-answers simple [2 2 2] (range 3) (range 3)) => [simple simple simple]
+  (next-winning-answers simple [1 1 1] (range 3) (range 3)) => 
+    [ (subset simple [0 1]),
+      (subset simple [0 2]),
+      (subset simple [1 2])]
+  )
 
-
-;; if there is only one winner, you're done. Return a hash with the winner, and prob 1
-;; if there are multiple winners, but you're out of criteria, you're done. Return a hash with 1/c probabilities for each answer.
-;; if there are multiple winners, but there are still criteria unexplored, dive down by removing all non-winners from the answers, and the next criterion on the list; when a hash of probabilities comes back, merge it in
-
-
-
-;; '{0 (0), 1 (3), 2 (0), 3 (0 4), 4 (4), 5 (3), 6 (3), 7 (1 2)}
-
-;;        0    1    2    3    4    5    6    7
-;;  0    1/8       1/8   *
-;;  1                                        *
-;;  2                                        *
-;;  3         1/8                 1/8  1/8
-;;  4                    *   1/8
-
-;; 3:           only previous-tied answers included in run-off
-;;        0    1    2    3    4    5    6    7
-;;  0    1/7  1/7  1/7   *
-;;  4                    *   1/7  1/7  1/7  1/7
-
-
-;;        0    1    2    3    4    5    6    7
-;;  0    1/8       1/8  3/56
-;;  1                                        *
-;;  2                                        *
-;;  3         1/8                 1/8  1/8
-;;  4                   1/14 1/8
-
-
-
-;; 7:             ubiquitous ties removed from score indices initially
-;;        0    1    2    3    4    5    6    7
-;;  1     X   1/2   X    X    X    X    X    *
-;;  2     X   1/2   X    X    X    X    X    *
-;;            ^^^ only no criteria remain, so even split
-
-
-;;        0    1    2    3    4    5    6    7
-;;  0    1/8       1/8  3/56
-;;  1                                       1/8
-;;  2                                        0
-;;  3         1/8                 1/8  1/8
-;;  4                   1/14 1/8
-
-
-;;        0    1    2    3    4    5    6    7
-;;  0    1/8       1/8  3/56                       = 17/56
-;;  1                                       1/8    =  1/8
-;;  2                                       0      =  0
-;;  3         1/8                 1/8  1/8         =  3/8
-;;  4                   1/14 1/8                   = 11/56
-
-
-
+;;   0 1 2
+;; 0 * * 
+;; 1 *   *
+;; 2   * *
 
 (defn get-scores
   [answers score-index]
@@ -369,7 +325,7 @@
   "Takes a collection of numbers, and returns `true` if all the values are within `delta` of the smallest value"
   [numbers delta]
   (let [best (apply min numbers)]
-    (empty? (remove #(close-enough? best % delta) numbers))))
+    (every? #(close-enough? best % delta) numbers)))
 
 
 (fact "all-nearly-best?"
@@ -391,8 +347,17 @@
   (purge-ties (take 3 boring) [0 1 2 3 4 5 6 7]) => [0]
   )
 
+
 (fact "purge-ties works when none are left"
   (purge-ties identical [0 1 2]) => []
+  )
+
+
+(fact "purge-ties does not loop forever (bug fix)"
+  (purge-ties simple [1 2] :deltas [1 1 1]) => [1 2]
+  (purge-ties simple [2] :deltas [1 1 1]) => [2]
+  (purge-ties simple [0 1 2] :deltas [2 2 2]) => []
+  (purge-ties simple [0 1 2] :deltas [1 1 1]) => [0 1 2]
   )
 
 
@@ -457,22 +422,25 @@
           active-criteria (count useful-indices)
           nobody (zipmap survivors (repeat 0))]
 
+      
       (if (empty? useful-indices)
         (zipmap survivors (repeat (/ total (count survivors))))
         (reduce
           collapse-probabilities
-          {}
+          
           (map-indexed
             (fn [idx winners]
               (collapse-probabilities
                 nobody
-                (if (< active-criteria 2) ;; nothing more to check
-                  (zipmap winners (repeat (/ total (count winners))))
-                  (probs winners
-                         deltas
-                         (/ total active-criteria)
-                         (remove #{idx} useful-indices)
-                         ))))
+                (cond (< active-criteria 2) ;; nothing more to check
+                        (zipmap winners (repeat (/ total (count winners))))
+                      :else
+                        (do 
+                        (probs winners
+                               deltas
+                               (/ total active-criteria)
+                               (remove #{idx} useful-indices)
+                               )))))
             breakdown
             ))))))
 
@@ -531,6 +499,30 @@
       {:genome 3, :scores [3 1 2]} 2/3}
   (apply + (vals (probs simple [1 0 1]))) => 1
 
+  (probs simple [0 0 0]) => 
+    '{{:genome 1, :scores [1 2 3]} 1/3, 
+      {:genome 2, :scores [2 3 1]} 1/3, 
+      {:genome 3, :scores [3 1 2]} 1/3}
+  (apply + (vals (probs simple [1 0 1]))) => 1
+
+
+
+  (def sloppy  ;; like simple with deltas = [1 1 1]
+    [ {:genome 1 :scores [1 1 3]}
+      {:genome 2 :scores [1 3 1]}
+      {:genome 3 :scores [3 1 1]}
+      ])
+
+
+
+  (probs sloppy [0 0 0]) => 
+    '{{:genome 1, :scores [1 1 3]} 1/3, 
+      {:genome 2, :scores [1 3 1]} 1/3, 
+      {:genome 3, :scores [3 1 1]} 1/3}
+  (apply + (vals (probs sloppy [0 0 0]))) => 1
+
+
+
   (probs simple [1 1 1]) => 
     '{{:genome 1, :scores [1 2 3]} 1/6, 
       {:genome 2, :scores [2 3 1]} 1/6, 
@@ -545,34 +537,34 @@
 
 
 
-(fact "I can pass in a bigdec probability and expect it to work, at least in a with-precision block"
-  (with-precision 40 (probs identical (repeat 0) 1M)) => 
-    '{{:genome 1, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M,  
-      {:genome 2, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M, 
-      {:genome 3, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M}
-  (apply + (vals (probs identical (repeat 0) 1))) => 1
-  )
+; (fact "I can pass in a bigdec probability and expect it to work, at least in a with-precision block"
+;   (with-precision 40 (probs identical (repeat 0) 1M)) => 
+;     '{{:genome 1, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M,  
+;       {:genome 2, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M, 
+;       {:genome 3, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M}
+;   (apply + (vals (probs identical (repeat 0) 1))) => 1
+;   )
 
 
 
-;; exploring a bit
+; ;; exploring a bit
 
-(defn random-fake-answer
-  [genome numscores]
-  {:genome genome :scores (into [] (take numscores (repeatedly #(rand-int 100))))})
-
-
-(fact "random-fake-answer"
-  (count (:scores (random-fake-answer 99 100))) => 100)
+; (defn random-fake-answer
+;   [genome numscores]
+;   {:genome genome :scores (into [] (take numscores (repeatedly #(rand-int 100))))})
 
 
-(def big-scores-100
-  (map #(random-fake-answer % 100) (range 100)))
+; (fact "random-fake-answer"
+;   (count (:scores (random-fake-answer 99 100))) => 100)
 
 
-(future-fact "probs works for large populations without breaking; activate this test to see it work"
+; (def big-scores-100
+;   (map #(random-fake-answer % 100) (range 100)))
 
-  (time (sort (vals (probs big-scores-100)))) => 99
-  )
+
+; (future-fact "probs works for large populations without breaking; activate this test to see it work"
+
+;   (time (sort (vals (probs big-scores-100)))) => 99
+;   )
 
 
