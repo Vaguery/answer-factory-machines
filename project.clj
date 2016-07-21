@@ -6,6 +6,7 @@
                  [klapaucius "0.1.15-SNAPSHOT"]
                  [clj-time "0.11.0"]
                  [org.clojure/math.numeric-tower "0.0.4"]
-                 [midje "1.8.3"]]
+                 [midje "1.8.3"]
+                 [com.climate/claypoole "1.1.3"]]
 )
   
