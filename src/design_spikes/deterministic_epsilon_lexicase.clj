@@ -422,7 +422,6 @@
           active-criteria (count useful-indices)
           nobody (zipmap survivors (repeat 0))]
 
-      
       (if (empty? useful-indices)
         (zipmap survivors (repeat (/ total (count survivors))))
         (reduce
@@ -435,11 +434,11 @@
                 (cond (< active-criteria 2) ;; nothing more to check
                         (zipmap winners (repeat (/ total (count winners))))
                       :else
-                        (do 
+                        (let [drop-one (nth useful-indices idx)] 
                         (probs winners
                                deltas
                                (/ total active-criteria)
-                               (remove #{idx} useful-indices)
+                               (remove #{drop-one} useful-indices)
                                )))))
             breakdown
             ))))))
@@ -473,8 +472,8 @@
   (probs boring) => 
     '{{:genome 1, :scores [2 2 3 4 5 6 7 8]} 0, 
       {:genome 2, :scores [3 2 3 4 5 6 7 8]} 0, 
-      {:genome 3, :scores [1 2 3 4 5 6 7 8]} 11/12, 
-      {:genome 4, :scores [1 3 3 4 5 6 7 8]} 1/12, 
+      {:genome 3, :scores [1 2 3 4 5 6 7 8]} 1, 
+      {:genome 4, :scores [1 3 3 4 5 6 7 8]} 0, 
       {:genome 5, :scores [1 2 4 4 5 6 7 8]} 0}
   (apply + (vals (probs boring))) => 1
 
@@ -524,10 +523,16 @@
 
 
   (probs simple [1 1 1]) => 
-    '{{:genome 1, :scores [1 2 3]} 1/6, 
-      {:genome 2, :scores [2 3 1]} 1/6, 
-      {:genome 3, :scores [3 1 2]} 2/3}
-  (apply + (vals (probs simple [1 0 1]))) => 1
+    '{{:genome 1, :scores [1 2 3]} 1/3, 
+      {:genome 2, :scores [2 3 1]} 1/3, 
+      {:genome 3, :scores [3 1 2]} 1/3}
+  (apply + (vals (probs simple [1 1 1]))) => 1
+
+  (probs simple [2 2 2]) => 
+    '{{:genome 1, :scores [1 2 3]} 1/3, 
+      {:genome 2, :scores [2 3 1]} 1/3, 
+      {:genome 3, :scores [3 1 2]} 1/3}
+  (apply + (vals (probs simple [1 1 1]))) => 1
 )
 
 
@@ -537,34 +542,35 @@
 
 
 
-; (fact "I can pass in a bigdec probability and expect it to work, at least in a with-precision block"
-;   (with-precision 40 (probs identical (repeat 0) 1M)) => 
-;     '{{:genome 1, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M,  
-;       {:genome 2, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M, 
-;       {:genome 3, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M}
-;   (apply + (vals (probs identical (repeat 0) 1))) => 1
-;   )
+(fact "I can pass in a bigdec probability and expect it to work, at least in a with-precision block"
+  (with-precision 40 (probs identical (repeat 0) 1M)) => 
+    '{{:genome 1, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M,  
+      {:genome 2, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M, 
+      {:genome 3, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M}
+  (apply + (vals (probs identical (repeat 0) 1))) => 1
+  )
 
 
 
 ; ;; exploring a bit
 
-; (defn random-fake-answer
-;   [genome numscores]
-;   {:genome genome :scores (into [] (take numscores (repeatedly #(rand-int 100))))})
+(defn random-fake-answer
+  [genome numscores]
+  {:genome genome :scores (into [] (take numscores (repeatedly #(rand-int 100))))})
 
 
-; (fact "random-fake-answer"
-;   (count (:scores (random-fake-answer 99 100))) => 100)
+(fact "random-fake-answer"
+  (count (:scores (random-fake-answer 99 100))) => 100)
 
 
-; (def big-scores-100
-;   (map #(random-fake-answer % 100) (range 100)))
+(def big-scores-100
+  (map #(random-fake-answer % 100) (range 100)))
 
 
-; (future-fact "probs works for large populations without breaking; activate this test to see it work"
-
-;   (time (sort (vals (probs big-scores-100)))) => 99
-;   )
+(fact "probs works for large populations without breaking; activate this test to see it work"
+  (let [results (probs big-scores-100)]
+    (vals results) => 99
+    (count (remove #{0} (vals results))) => 99
+  ))
 
 
