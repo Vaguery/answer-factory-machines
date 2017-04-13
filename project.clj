@@ -8,5 +8,6 @@
                  [org.clojure/math.numeric-tower "0.0.4"]
                  [midje "1.8.3"]
                  [com.climate/claypoole "1.1.3"]]
+  :jvm-opts ["-Xmx4g"]
 )
   

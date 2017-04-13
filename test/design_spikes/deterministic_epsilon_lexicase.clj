@@ -50,6 +50,7 @@
 
 
 (fact "get-score returns the value from `:scores` at the index"
+  :prototype
   (get-score (first population) 7) => 8
   (get-score (first population) 2) => 3
   (get-score (last population) 2) => 4
@@ -61,12 +62,13 @@
   [answers score-idx delta]
   (let [scores (map #(get-score % score-idx) answers)
         best   (apply min scores)]
-    (filter 
+    (filter
       #(close-enough? (get-score % score-idx) best delta)
       answers)))
 
 
 (fact "single results from winning-answers"
+  :prototype
   (map :genome (winning-answers population 0 0)) => [0]
   (map :genome (winning-answers population 1 0)) => [3]
   (map :genome (winning-answers population 2 0)) => [0]
@@ -78,15 +80,17 @@
 
 
 (fact "winning-answers works with various delta values"
-  (map #(map :genome (winning-answers population % 0)) (range 8)) => 
+  :prototype
+  (map #(map :genome (winning-answers population % 0)) (range 8)) =>
     '((0)     (3)     (0)       (0 4)     (4)       (3) (3) (1 2))
-  (map #(map :genome (winning-answers population % 1)) (range 8)) => 
+  (map #(map :genome (winning-answers population % 1)) (range 8)) =>
     '((0 1 2) (0 3)   (0 1 2 4) (0 1 2 4) (0 4)     (3) (3) (1 2))
-  (map #(map :genome (winning-answers population % 2)) (range 8)) => 
+  (map #(map :genome (winning-answers population % 2)) (range 8)) =>
     '((0 1 2) (0 1 3) (0 1 2 4) (0 1 2 4) (0 1 2 4) (3) (3) (1 2)))
 
 
 (fact "winning-answers works with a tie"
+  :prototype
   (winning-answers identical 0 0) => identical)
 
 
@@ -94,7 +98,7 @@
   [answers deltas answer-indices score-indices]
   (let [which-answers (map #(nth answers %) answer-indices)]
     (map
-      #(winning-answers 
+      #(winning-answers
         which-answers
         %
         (nth deltas %)) score-indices)))
@@ -106,7 +110,8 @@
 
 
 (fact "next-winning-answers does the same as winning-answers mapped"
-  (next-winning-answers population (repeat 0) (range 5) (range 8)) => 
+  :prototype
+  (next-winning-answers population (repeat 0) (range 5) (range 8)) =>
      [ [(nth population 0)],
        [(nth population 3)],
        [(nth population 0)],
@@ -115,31 +120,33 @@
        [(nth population 3)],
        [(nth population 3)],
        [(nth population 1) (nth population 2)] ]
-  (next-winning-answers population (repeat 1) (range 5) (range 8)) => 
-     [ (subset population [0 1 2]), 
-       (subset population [0 3]), 
-       (subset population [0 1 2 4]), 
-       (subset population [0 1 2 4]), 
-       (subset population [0 4]), 
+  (next-winning-answers population (repeat 1) (range 5) (range 8)) =>
+     [ (subset population [0 1 2]),
+       (subset population [0 3]),
+       (subset population [0 1 2 4]),
+       (subset population [0 1 2 4]),
+       (subset population [0 4]),
        (subset population [3]),
-       (subset population [3]), 
+       (subset population [3]),
        (subset population [1 2]) ]
   )
 
 
 (fact "next-winning-answers can handle complex score index lists"
-  (next-winning-answers population (repeat 0) (range 5) [0]) => 
+  :prototype
+  (next-winning-answers population (repeat 0) (range 5) [0]) =>
     [ (subset population [0]) ]
-  (next-winning-answers population (repeat 1) (range 5) [0 2 4 5]) => 
+  (next-winning-answers population (repeat 1) (range 5) [0 2 4 5]) =>
     [ (subset population [0 1 2]),
       (subset population [0 1 2 4]),
-      (subset population [0 4]), 
+      (subset population [0 4]),
       (subset population [3]) ]
     )
 
 (fact "next-winning-answers handles an odd edge case"
+  :prototype
   (next-winning-answers simple [2 2 2] (range 3) (range 3)) => [simple simple simple]
-  (next-winning-answers simple [1 1 1] (range 3) (range 3)) => 
+  (next-winning-answers simple [1 1 1] (range 3) (range 3)) =>
     [ (subset simple [0 1]),
       (subset simple [0 2]),
       (subset simple [1 2])]
@@ -159,22 +166,24 @@
 
 
 (fact "all-nearly-best?"
+  :prototype
   (all-nearly-best? [0 1 2 3] 0) => false
   (all-nearly-best? [0 1 2 3] 3) => true)
 
 
 (defn purge-ties
   "removes indices of score columns which are constant; accepts an optional `deltas` collection, which is used to specify the acceptable range for each score, positionally, which counts as 'tied'"
-  [answers score-indices & {:keys [deltas] 
+  [answers score-indices & {:keys [deltas]
                             :or {deltas (repeat 0)}}]
-  (remove 
-    #(all-nearly-best? 
-      (get-scores answers %) 
-      (nth deltas %)) 
+  (remove
+    #(all-nearly-best?
+      (get-scores answers %)
+      (nth deltas %))
     score-indices))
 
 
-(fact 
+(fact
+  :prototype
   (purge-ties boring [0 1 2 3 4 5 6 7]) => [0 1 2]
   (purge-ties simple [0 1 2]) => [0 1 2]
   (purge-ties population [0 1 2 3 4 5 6 7]) => [0 1 2 3 4 5 6 7]
@@ -183,11 +192,13 @@
 
 
 (fact "purge-ties works when none are left"
+  :prototype
   (purge-ties identical [0 1 2]) => []
   )
 
 
 (fact "purge-ties does not loop forever (bug fix)"
+  :prototype
   (purge-ties simple [1 2] :deltas [1 1 1]) => [1 2]
   (purge-ties simple [2] :deltas [1 1 1]) => [2]
   (purge-ties simple [0 1 2] :deltas [2 2 2]) => []
@@ -196,27 +207,28 @@
 
 
 (fact "I can couple next-winning-answers and purge-ties"
+  :prototype
   (next-winning-answers
-    boring 
+    boring
     (repeat 0)
     (range 5)
-    (range 8)) => 
-      [ (subset boring [2 3 4]), 
-        (subset boring [0 1 2 4]), 
-        (subset boring [0 1 2 3]), 
-        (subset boring [0 1 2 3 4]), 
-        (subset boring [0 1 2 3 4]), 
-        (subset boring [0 1 2 3 4]), 
-        (subset boring [0 1 2 3 4]), 
+    (range 8)) =>
+      [ (subset boring [2 3 4]),
+        (subset boring [0 1 2 4]),
+        (subset boring [0 1 2 3]),
+        (subset boring [0 1 2 3 4]),
+        (subset boring [0 1 2 3 4]),
+        (subset boring [0 1 2 3 4]),
+        (subset boring [0 1 2 3 4]),
         (subset boring [0 1 2 3 4]) ]
 
   (next-winning-answers
-    boring 
+    boring
     (repeat 0)
     (range 5)
-    (purge-ties boring (range 8))) => 
-      [ (subset boring [2 3 4]), 
-        (subset boring [0 1 2 4]), 
+    (purge-ties boring (range 8))) =>
+      [ (subset boring [2 3 4]),
+        (subset boring [0 1 2 4]),
         (subset boring [0 1 2 3]) ]
         )
 
@@ -228,6 +240,7 @@
 
 
 (fact
+  :prototype
   (collapse-probabilities {} {1 1/2 2 2/3}) => {1 1/2, 2 2/3}
   (collapse-probabilities {1 1/2 2 2/3} {1 1/12 2 2/13}) => {1 7/12, 2 32/39}
   (collapse-probabilities {:a 1/2 :b 2/3} {:a 1/12 :b 2/13}) => {:a 7/12, :b 32/39}
@@ -236,10 +249,10 @@
 
 (defn probs
   "Calculate the absolute probabilities of selecting each individual from a collection, where it is assumed each individual contains a `vector` (as such!) called `:scores` which contains all the values measured. A collection of `deltas` can be passed in, one for each `:score` value, matching the scores positionally to indicate the range of numerical values _for that score_ which are to be treated as 'good enough'. A `total` value can also be passed in, representing the total probability being shared among the answers (useful for recursion, or testing). A collection of indices of scores can be passed in as `criteria`, which specifies (by index) which score columns to use while ignoring others. It is assumed that every individual's `:scores` vector has the same number of items."
-  [survivors & 
+  [survivors &
     {:keys [deltas
             total
-            criteria] 
+            criteria]
      :or   {deltas   (repeat 0)
             total    1
             criteria (range (count (:scores (first survivors))))}}]
@@ -256,13 +269,13 @@
         (zipmap survivors (repeat (/ total (count survivors))))
         (reduce
           collapse-probabilities
-          (cp/pmap 4
+          (pmap
             (fn [idx winners]
               (collapse-probabilities
                 nobody
                 (if (< active-criteria 2)
                   (zipmap winners (repeat (/ total (count winners))))
-                  (let [drop-one (nth useful-indices idx)] 
+                  (let [drop-one (nth useful-indices idx)]
                     (probs winners
                            :deltas deltas
                            :total (/ total active-criteria)
@@ -274,42 +287,43 @@
 
 
 (fact "probabilities of selection can be calculated which match hand-calculation, and which include all genomes, and which sum to 1N"
-  (probs simple) => 
-    '{{:genome 1, :scores [1 2 3]} 1/3,  
-      {:genome 2, :scores [2 3 1]} 1/3, 
+  :prototype
+  (probs simple) =>
+    '{{:genome 1, :scores [1 2 3]} 1/3,
+      {:genome 2, :scores [2 3 1]} 1/3,
       {:genome 3, :scores [3 1 2]} 1/3}
   (apply + (vals (probs simple))) => 1
 
-  (probs simple :criteria [0]) => 
-    '{{:genome 1, :scores [1 2 3]} 1, 
-      {:genome 2, :scores [2 3 1]} 0, 
+  (probs simple :criteria [0]) =>
+    '{{:genome 1, :scores [1 2 3]} 1,
+      {:genome 2, :scores [2 3 1]} 0,
       {:genome 3, :scores [3 1 2]} 0}
   (apply + (vals (probs simple :criteria [0]))) => 1
 
 
-  (probs population) => 
-    '{{:genome 0, :scores [1 2 3 4 5 6 7 8]} 17/56, 
-      {:genome 1, :scores [2 3 4 5 6 7 9 1]} 1/8, 
-      {:genome 2, :scores [2 5 4 5 6 7 9 1]} 0, 
-      {:genome 3, :scores [7 1 7 8 9 1 1 4]} 3/8, 
+  (probs population) =>
+    '{{:genome 0, :scores [1 2 3 4 5 6 7 8]} 17/56,
+      {:genome 1, :scores [2 3 4 5 6 7 9 1]} 1/8,
+      {:genome 2, :scores [2 5 4 5 6 7 9 1]} 0,
+      {:genome 3, :scores [7 1 7 8 9 1 1 4]} 3/8,
       {:genome 4, :scores [4 4 4 4 4 4 4 4]} 11/56}
 
   (apply + (vals (probs population))) => 1
 
 
-  (probs boring) => 
-    '{{:genome 1, :scores [2 2 3 4 5 6 7 8]} 0, 
-      {:genome 2, :scores [3 2 3 4 5 6 7 8]} 0, 
-      {:genome 3, :scores [1 2 3 4 5 6 7 8]} 1, 
-      {:genome 4, :scores [1 3 3 4 5 6 7 8]} 0, 
+  (probs boring) =>
+    '{{:genome 1, :scores [2 2 3 4 5 6 7 8]} 0,
+      {:genome 2, :scores [3 2 3 4 5 6 7 8]} 0,
+      {:genome 3, :scores [1 2 3 4 5 6 7 8]} 1,
+      {:genome 4, :scores [1 3 3 4 5 6 7 8]} 0,
       {:genome 5, :scores [1 2 4 4 5 6 7 8]} 0}
 
   (apply + (vals (probs boring))) => 1
 
 
-  (probs identical) => 
-    '{{:genome 1, :scores [1 1 1]} 1/3,  
-      {:genome 2, :scores [1 1 1]} 1/3, 
+  (probs identical) =>
+    '{{:genome 1, :scores [1 1 1]} 1/3,
+      {:genome 2, :scores [1 1 1]} 1/3,
       {:genome 3, :scores [1 1 1]} 1/3}
 
   (apply + (vals (probs identical))) => 1)
@@ -318,25 +332,26 @@
 
 
 (fact "probabilities of selection take into account `deltas`"
-  (probs simple :deltas [0 0 1]) => 
-    '{{:genome 1, :scores [1 2 3]} 1/3, 
-      {:genome 2, :scores [2 3 1]} 1/6, 
+  :prototype
+  (probs simple :deltas [0 0 1]) =>
+    '{{:genome 1, :scores [1 2 3]} 1/3,
+      {:genome 2, :scores [2 3 1]} 1/6,
       {:genome 3, :scores [3 1 2]} 1/2}
 
   (apply + (vals (probs simple :deltas [0 0 1]))) => 1
 
 
-  (probs simple :deltas [1 0 1]) => 
-    '{{:genome 1, :scores [1 2 3]} 1/6, 
-      {:genome 2, :scores [2 3 1]} 1/6, 
+  (probs simple :deltas [1 0 1]) =>
+    '{{:genome 1, :scores [1 2 3]} 1/6,
+      {:genome 2, :scores [2 3 1]} 1/6,
       {:genome 3, :scores [3 1 2]} 2/3}
 
   (apply + (vals (probs simple :deltas [1 0 1]))) => 1
 
 
-  (probs simple :deltas [0 0 0]) => 
-    '{{:genome 1, :scores [1 2 3]} 1/3, 
-      {:genome 2, :scores [2 3 1]} 1/3, 
+  (probs simple :deltas [0 0 0]) =>
+    '{{:genome 1, :scores [1 2 3]} 1/3,
+      {:genome 2, :scores [2 3 1]} 1/3,
       {:genome 3, :scores [3 1 2]} 1/3}
 
   (apply + (vals (probs simple :deltas [1 0 1]))) => 1
@@ -349,36 +364,37 @@
       ])
 
 
-  (probs sloppy :deltas [0 0 0]) => 
-    '{{:genome 1, :scores [1 1 3]} 1/3, 
-      {:genome 2, :scores [1 3 1]} 1/3, 
+  (probs sloppy :deltas [0 0 0]) =>
+    '{{:genome 1, :scores [1 1 3]} 1/3,
+      {:genome 2, :scores [1 3 1]} 1/3,
       {:genome 3, :scores [3 1 1]} 1/3}
 
   (apply + (vals (probs sloppy :deltas [0 0 0]))) => 1
 
 
-  (probs simple :deltas [1 1 1]) => 
-    '{{:genome 1, :scores [1 2 3]} 1/3, 
-      {:genome 2, :scores [2 3 1]} 1/3, 
+  (probs simple :deltas [1 1 1]) =>
+    '{{:genome 1, :scores [1 2 3]} 1/3,
+      {:genome 2, :scores [2 3 1]} 1/3,
       {:genome 3, :scores [3 1 2]} 1/3}
 
   (apply + (vals (probs simple :deltas [1 1 1]))) => 1
 
 
-  (probs simple :deltas [2 2 2]) => 
-    '{{:genome 1, :scores [1 2 3]} 1/3, 
-      {:genome 2, :scores [2 3 1]} 1/3, 
+  (probs simple :deltas [2 2 2]) =>
+    '{{:genome 1, :scores [1 2 3]} 1/3,
+      {:genome 2, :scores [2 3 1]} 1/3,
       {:genome 3, :scores [3 1 2]} 1/3}
-  
+
   (apply + (vals (probs simple :deltas [1 1 1]))) => 1
 )
 
 
 
 (fact "I can pass in a bigdec probability and expect it to work, at least in a with-precision block"
-  (with-precision 40 (probs identical :total 1M)) => 
-    '{{:genome 1, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M,  
-      {:genome 2, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M, 
+  :prototype
+  (with-precision 40 (probs identical :total 1M)) =>
+    '{{:genome 1, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M,
+      {:genome 2, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M,
       {:genome 3, :scores [1 1 1]} 0.3333333333333333333333333333333333333333M}
   )
 
@@ -387,23 +403,32 @@
 
 (defn random-fake-answer
   [genome numscores]
-  {:genome genome :scores (into [] (take numscores (repeatedly #(rand-int 100))))})
+  {:genome genome :scores (into [] (take numscores (repeatedly #(rand-int 10))))})
 
 
-(fact "random-fake-answer"
-  (count (:scores (random-fake-answer 99 100))) => 100)
+; (fact "random-fake-answer"
+;   (count (:scores (random-fake-answer 99 100))) => 100)
 
 
-(def big-scores-1000
-  (map #(random-fake-answer % 100) (range 1000)))
+(def big-scores-100
+  (map #(random-fake-answer % 10) (range 10)))
 
 
 (future-fact "probs works for large populations without breaking; activate this test (change 'future-fact' to 'fact') to see it work VERY VERY SLOWLY WITH THESE SETTINGS"
-  (let [results (time (probs big-scores-1000))]
-    (vals results) => 99
+  :prototype
+  (let [results (time (probs big-scores-100))]
+    (println (frequencies (vals results)) "\n\n")
+    (println (last (sort-by val results)))
+
+    (sort (vals results)) => 99
     (count (remove #{0} (vals results))) => 99
   ))
 
+
+;; 0 0 3 3 3 3 3
+;; 0 1 9 9 9 9 9
+;; 1 0 9 9 9 9 9
+;; 4 4 4 4 4 4 4
 
 ;; timing on my awful old laptop
 ;; big-scores-100
