@@ -2,7 +2,7 @@
 
 A collection of Clojure tools for generative programming of Push and Klapaucius programs.
 
-[View the project documentation here]().
+[View the project documentation here](http://vaguery.github.io/answer-factory-machines/).
 
 ### Status & Contributing
 
