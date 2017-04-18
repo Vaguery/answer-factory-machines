@@ -1,7 +1,6 @@
 (ns answer-factory.operator.guess-test
   (:use midje.sweet)
   (:use answer-factory.answer.push)
-  (:require [answer-factory.util.selection-fixtures :as fixtures])
   (:use answer-factory.operator.guess)
   (:require [push.core :as push]))
 

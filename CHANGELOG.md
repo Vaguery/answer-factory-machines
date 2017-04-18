@@ -10,6 +10,7 @@
 ## 0.0.7
 
 - name change and version bump
+- updated dependencies to use Klapaucius 0.1.25
 
 ## earlier
 
