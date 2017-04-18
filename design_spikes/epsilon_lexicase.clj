@@ -38,6 +38,7 @@
 
 
 (fact "get-score returns the value from `:scores` at the index"
+  :prototype
   (get-score (first population) 7) => 8
   (get-score (first population) 2) => 3
   (get-score (last population) 2) => 4
@@ -52,6 +53,7 @@
 
 
 (fact "median works as expected"
+  :prototype
   (median [0 1 2 3 11 12 13 14]) => 11
   (median [0 1 2 3 11 12 13]) => 3
   (median (shuffle [0 1 2 3 11 12 13 14 15 16])) => 12
@@ -69,6 +71,7 @@
 
 
 (fact "median-absolute-deviation returns a value for epsilon"
+  :prototype
   (median-absolute-deviation [0 1 2 3 11 12 13 14]) => 8
   (median-absolute-deviation [0 1 2 3 11 12 13]) => 3
   (median-absolute-deviation (shuffle [0 1 2 3 11 12 13 14 15 16])) => 4
@@ -95,6 +98,7 @@
 
 
 (fact "sloppy-simple-selection returns the best and maybe more"
+  :prototype
                                                            ;; 2 3 5 1 4
   (map :genome (sloppy-simple-selection population 1 0)) => '(      4  )
   (map :genome (sloppy-simple-selection population 1 1)) => '(1     4  )
@@ -109,12 +113,13 @@
   [answers]
   (let [score-count (count (:scores (first answers)))]
     (map (fn [s]
-            (median-absolute-deviation 
+            (median-absolute-deviation
               (map #(get-score % s) answers)))
          (range score-count))))
 
 
 (fact "mad-deltas"
+  :prototype
   (mad-deltas population)   => '(1 1 0 1 1 1 2 3)
   )
 
@@ -144,25 +149,26 @@
                       delta     (nth deltas criterion)]
                   (recur (sloppy-simple-selection survivors criterion delta)
                          (rest criteria))))))))
-              
+
 
 
 
 (fact "epsilon-lexicase-selection returns some answers"
-  (epsilon-lexicase-selection population my-deltas) => 
+  :prototype
+  (epsilon-lexicase-selection population my-deltas) =>
       '({:genome 1, :scores [1 2 3 4 5 6 7 8]})
     (provided (shuffled-indices 8) => [0 1 2]) ;; override randomness
 
-  (epsilon-lexicase-selection population my-deltas) => 
+  (epsilon-lexicase-selection population my-deltas) =>
       '({:genome 5, :scores [4 4 4 4 4 4 4 4]})
     (provided (shuffled-indices 8) => [3 4 5]) ;; override randomness
 
-  (epsilon-lexicase-selection population my-deltas) => 
+  (epsilon-lexicase-selection population my-deltas) =>
       '({:genome 4, :scores [7 1 7 8 9 1 1 4]})
     (provided (shuffled-indices 8) => [6 7 0]) ;; override randomness
 
-  (epsilon-lexicase-selection population my-deltas) => 
-      '({:genome 2, :scores [2 3 4 5 6 7 9 1]} 
+  (epsilon-lexicase-selection population my-deltas) =>
+      '({:genome 2, :scores [2 3 4 5 6 7 9 1]}
         {:genome 3, :scores [2 5 4 5 6 7 9 1]})
     (provided (shuffled-indices 8) => [7 2 3 0]) ;; override randomness
   )
@@ -170,13 +176,15 @@
 
 
 (fact "epsilon-lexicase-selection accepts an explicit deltas vector"
-  (epsilon-lexicase-selection population [0 0 0 0 0 0 0 0]) => 
+  :prototype
+  (epsilon-lexicase-selection population [0 0 0 0 0 0 0 0]) =>
       '({:genome 4, :scores [7 1 7 8 9 1 1 4]})
     (provided (shuffled-indices 8) => [1]) ;; override randomness
-)
+    )
 
 
 
 (fact "epsilon-lexicase-selection can be tuned via the deltas vector"
+  :prototype
   (epsilon-lexicase-selection population (take 8 (repeat 1000))) => population
-)
+  )

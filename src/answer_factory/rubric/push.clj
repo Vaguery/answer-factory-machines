@@ -10,7 +10,6 @@
   )
 
 
-
 (defrecord TestCase [id note context inputs expected])
 
 
@@ -24,7 +23,6 @@
   "produces a hash-map where each element of the set of keys has a nil value"
   [s]
   (reduce (fn [m i] (merge m {i nil})) {} s))
-
 
 
 (defn test-case
@@ -121,4 +119,3 @@
       (exercise-test-case tc p)
       missing-value)
     ))
-

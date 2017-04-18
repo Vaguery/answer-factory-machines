@@ -1,8 +1,8 @@
 (ns answer-factory.genome.bb8-test
-  (:use midje.sweet)
   (:require [clojure.zip :as zip])
   (:use [answer-factory.genome.bb8])
-  (:use clojure.pprint))
+  (:use midje.sweet)
+  )
 
 
 ;; fixtures
@@ -87,40 +87,40 @@
 
 
 (fact ":head tuples"
-  (zip/root (apply-gene {:from :head :put :L :item 99} test-zipper)) => 
+  (zip/root (apply-gene {:from :head :put :L :item 99} test-zipper)) =>
     '(99 1 2 3 (4 5 (6)))
-  (zip/root (apply-gene {:from :head :put :R :item 99} test-zipper)) => 
+  (zip/root (apply-gene {:from :head :put :R :item 99} test-zipper)) =>
     '(1 99 2 3 (4 5 (6)))
 
-  (zip/root (apply-gene {:from :head :put :L :item 99} empty-zipper)) => 
+  (zip/root (apply-gene {:from :head :put :L :item 99} empty-zipper)) =>
     '(99)
-  (zip/root (apply-gene {:from :head :put :R :item 99} empty-zipper)) => 
+  (zip/root (apply-gene {:from :head :put :R :item 99} empty-zipper)) =>
     '(99)
 
-  (zip/root (apply-gene {:from :head :put :L :item 99} simple-zipper)) => 
+  (zip/root (apply-gene {:from :head :put :L :item 99} simple-zipper)) =>
     '(99 :foo :bar :baz)
-  (zip/root (apply-gene {:from :head :put :R :item 99} simple-zipper)) => 
+  (zip/root (apply-gene {:from :head :put :R :item 99} simple-zipper)) =>
     '(:foo 99 :bar :baz)
 
-  (zip/root (apply-gene {:from :head :put :L :item 99} stubby-zipper)) => 
+  (zip/root (apply-gene {:from :head :put :L :item 99} stubby-zipper)) =>
     '(99 () () (())))
 
 
 
 (fact ":head nil tuples"
-  (zip/root (apply-gene {:from :head :put :L :item nil} test-zipper)) => 
+  (zip/root (apply-gene {:from :head :put :L :item nil} test-zipper)) =>
     '(1 2 3 (4 5 (6)))
-  (zip/root (apply-gene {:from :head :put :R} test-zipper)) => 
+  (zip/root (apply-gene {:from :head :put :R} test-zipper)) =>
     '(1 2 3 (4 5 (6)))
 
-  (zip/root (apply-gene {:from :head :put :L :item nil} empty-zipper)) => 
+  (zip/root (apply-gene {:from :head :put :L :item nil} empty-zipper)) =>
     '()
-  (zip/root (apply-gene {:from :head :put :R} empty-zipper)) => 
+  (zip/root (apply-gene {:from :head :put :R} empty-zipper)) =>
     '()
 
-  (zip/root (apply-gene {:from :head :put :L :item nil} simple-zipper)) => 
+  (zip/root (apply-gene {:from :head :put :L :item nil} simple-zipper)) =>
     '(:foo :bar :baz)
-  (zip/root (apply-gene {:from :head :put :R} simple-zipper)) => 
+  (zip/root (apply-gene {:from :head :put :R} simple-zipper)) =>
     '(:foo :bar :baz))
 
 
@@ -135,22 +135,22 @@
 
 
 (fact ":tail tuples"
-  (zip/root (apply-gene {:from :tail :put :L :item 99} test-zipper)) => 
+  (zip/root (apply-gene {:from :tail :put :L :item 99} test-zipper)) =>
     '(1 2 3 (4 5 (99 6)))
-  (zip/root (apply-gene {:from :tail :put :R :item 99} test-zipper)) => 
+  (zip/root (apply-gene {:from :tail :put :R :item 99} test-zipper)) =>
     '(1 2 3 (4 5 (6 99)))
 
-  (zip/root (apply-gene {:from :tail :put :L :item 99} empty-zipper)) => 
+  (zip/root (apply-gene {:from :tail :put :L :item 99} empty-zipper)) =>
     '(99)
-  (zip/root (apply-gene {:from :tail :put :R :item 99} empty-zipper)) => 
+  (zip/root (apply-gene {:from :tail :put :R :item 99} empty-zipper)) =>
     '(99)
 
-  (zip/root (apply-gene {:from :tail :put :L :item 99} simple-zipper)) => 
+  (zip/root (apply-gene {:from :tail :put :L :item 99} simple-zipper)) =>
     '(:foo :bar 99 :baz)
-  (zip/root (apply-gene {:from :tail :put :R :item 99} simple-zipper)) => 
+  (zip/root (apply-gene {:from :tail :put :R :item 99} simple-zipper)) =>
     '(:foo :bar :baz 99)
 
-  (zip/root (apply-gene {:from :tail :put :L :item 99} stubby-zipper)) => 
+  (zip/root (apply-gene {:from :tail :put :L :item 99} stubby-zipper)) =>
     '(() () ((99)))
   (zip/root (apply-gene {:from :tail :put :L :item 99}
     (-> stubby-zipper zip/prev zip/prev))) => '(() () ((99)))
@@ -158,23 +158,23 @@
 
 
 (fact ":tail nil tuples"
-  (zip/root (apply-gene {:from :tail :put :L :item nil} test-zipper)) => 
+  (zip/root (apply-gene {:from :tail :put :L :item nil} test-zipper)) =>
     '(1 2 3 (4 5 (6)))
-  (zip/root (apply-gene {:from :tail :put :R} test-zipper)) => 
+  (zip/root (apply-gene {:from :tail :put :R} test-zipper)) =>
     '(1 2 3 (4 5 (6)))
   (zip/node (apply-gene {:from :tail :put :R} test-zipper)) => 6
 
-  (zip/root (apply-gene {:from :tail :put :L :item nil} empty-zipper)) => 
+  (zip/root (apply-gene {:from :tail :put :L :item nil} empty-zipper)) =>
     '()
-  (zip/root (apply-gene {:from :tail :put :R} empty-zipper)) => 
+  (zip/root (apply-gene {:from :tail :put :R} empty-zipper)) =>
     '()
-  (zip/node (apply-gene {:from :tail :put :R} empty-zipper)) => '()  
+  (zip/node (apply-gene {:from :tail :put :R} empty-zipper)) => '()
 
-  (zip/root (apply-gene {:from :tail :put :L :item nil} simple-zipper)) => 
+  (zip/root (apply-gene {:from :tail :put :L :item nil} simple-zipper)) =>
     '(:foo :bar :baz)
-  (zip/root (apply-gene {:from :tail :put :R} simple-zipper)) => 
+  (zip/root (apply-gene {:from :tail :put :R} simple-zipper)) =>
     '(:foo :bar :baz)
-  (zip/node (apply-gene {:from :tail :put :R} simple-zipper)) => 
+  (zip/node (apply-gene {:from :tail :put :R} simple-zipper)) =>
     :baz  )
 
 
@@ -193,22 +193,22 @@
   (let [at-5
     (-> test-zipper zip/next zip/next zip/next zip/next zip/next zip/next)]
 
-    (zip/root (apply-gene {:from :subhead :put :L :item 99} at-5)) => 
+    (zip/root (apply-gene {:from :subhead :put :L :item 99} at-5)) =>
       '(1 2 3 (99 4 5 (6)))
-    (zip/root (apply-gene {:from :subhead :put :R :item 99} at-5)) => 
+    (zip/root (apply-gene {:from :subhead :put :R :item 99} at-5)) =>
       '(1 2 3 (4 99 5 (6)))
 
-    (zip/root (apply-gene {:from :subhead :put :L :item 99} empty-zipper)) => 
+    (zip/root (apply-gene {:from :subhead :put :L :item 99} empty-zipper)) =>
       '(99)
-    (zip/root (apply-gene {:from :subhead :put :R :item 99} empty-zipper)) => 
+    (zip/root (apply-gene {:from :subhead :put :R :item 99} empty-zipper)) =>
       '(99)
 
-    (zip/root (apply-gene {:from :subhead :put :L :item 99} simple-zipper)) => 
+    (zip/root (apply-gene {:from :subhead :put :L :item 99} simple-zipper)) =>
       '(99 :foo :bar :baz)
-    (zip/root (apply-gene {:from :subhead :put :R :item 99} simple-zipper)) => 
+    (zip/root (apply-gene {:from :subhead :put :R :item 99} simple-zipper)) =>
       '(:foo 99 :bar :baz)
 
-    (zip/root (apply-gene {:from :subhead :put :L :item 99} stubby-zipper)) => 
+    (zip/root (apply-gene {:from :subhead :put :L :item 99} stubby-zipper)) =>
       '(() () ((99)))
     (zip/root (apply-gene {:from :subhead :put :L :item 99}
       (zip/prev stubby-zipper))) => '(() () (99 ()))
@@ -221,23 +221,23 @@
   (let [at-5
     (-> test-zipper zip/next zip/next zip/next zip/next zip/next zip/next)]
 
-    (zip/root (apply-gene {:from :subhead :put :L :item nil} at-5)) => 
+    (zip/root (apply-gene {:from :subhead :put :L :item nil} at-5)) =>
       '(1 2 3 (4 5 (6)))
-    (zip/root (apply-gene {:from :subhead :put :R} at-5)) => 
+    (zip/root (apply-gene {:from :subhead :put :R} at-5)) =>
       '(1 2 3 (4 5 (6)))
     (zip/node (apply-gene {:from :subhead :put :R} at-5)) => 4
 
-    (zip/root (apply-gene {:from :subhead :put :L :item nil} empty-zipper)) => 
+    (zip/root (apply-gene {:from :subhead :put :L :item nil} empty-zipper)) =>
       '()
-    (zip/root (apply-gene {:from :subhead :put :R} empty-zipper)) => 
+    (zip/root (apply-gene {:from :subhead :put :R} empty-zipper)) =>
       '()
-    (zip/node (apply-gene {:from :subhead :put :R} empty-zipper)) => '()  
+    (zip/node (apply-gene {:from :subhead :put :R} empty-zipper)) => '()
 
-    (zip/root (apply-gene {:from :subhead :put :L :item nil} simple-zipper)) => 
+    (zip/root (apply-gene {:from :subhead :put :L :item nil} simple-zipper)) =>
       '(:foo :bar :baz)
-    (zip/root (apply-gene {:from :subhead :put :R} simple-zipper)) => 
+    (zip/root (apply-gene {:from :subhead :put :R} simple-zipper)) =>
       '(:foo :bar :baz)
-    (zip/node (apply-gene {:from :subhead :put :R} simple-zipper)) => 
+    (zip/node (apply-gene {:from :subhead :put :R} simple-zipper)) =>
       :foo  ))
 
 
@@ -256,22 +256,22 @@
   (let [at-5
     (-> test-zipper zip/next zip/next zip/next zip/next zip/next zip/next)]
 
-    (zip/root (apply-gene {:from :left :put :L :item 99} at-5)) => 
+    (zip/root (apply-gene {:from :left :put :L :item 99} at-5)) =>
       '(1 2 3 (99 4 5 (6)))
-    (zip/root (apply-gene {:from :left :put :R :item 99} at-5)) => 
+    (zip/root (apply-gene {:from :left :put :R :item 99} at-5)) =>
       '(1 2 3 (4 99 5 (6)))
 
-    (zip/root (apply-gene {:from :left :put :L :item 99} empty-zipper)) => 
+    (zip/root (apply-gene {:from :left :put :L :item 99} empty-zipper)) =>
       '(99)
-    (zip/root (apply-gene {:from :left :put :R :item 99} empty-zipper)) => 
+    (zip/root (apply-gene {:from :left :put :R :item 99} empty-zipper)) =>
       '(99)
 
-    (zip/root (apply-gene {:from :left :put :L :item 99} simple-zipper)) => 
+    (zip/root (apply-gene {:from :left :put :L :item 99} simple-zipper)) =>
       '(:foo :bar 99 :baz)
-    (zip/root (apply-gene {:from :left :put :R :item 99} simple-zipper)) => 
+    (zip/root (apply-gene {:from :left :put :R :item 99} simple-zipper)) =>
       '(:foo :bar :baz 99)
 
-    (zip/root (apply-gene {:from :left :put :L :item 99} stubby-zipper)) => 
+    (zip/root (apply-gene {:from :left :put :L :item 99} stubby-zipper)) =>
       '(() () ((99)))
     (zip/root (apply-gene {:from :left :put :L :item 99}
       (zip/prev stubby-zipper))) => '(() () (99 ()))
@@ -286,23 +286,23 @@
   (let [at-5
     (-> test-zipper zip/next zip/next zip/next zip/next zip/next zip/next)]
 
-    (zip/root (apply-gene {:from :left :put :L :item nil} at-5)) => 
+    (zip/root (apply-gene {:from :left :put :L :item nil} at-5)) =>
       '(1 2 3 (4 5 (6)))
-    (zip/root (apply-gene {:from :left :put :R} at-5)) => 
+    (zip/root (apply-gene {:from :left :put :R} at-5)) =>
       '(1 2 3 (4 5 (6)))
     (zip/node (apply-gene {:from :left :put :R} at-5)) => 4
 
-    (zip/root (apply-gene {:from :left :put :L :item nil} empty-zipper)) => 
+    (zip/root (apply-gene {:from :left :put :L :item nil} empty-zipper)) =>
       '()
-    (zip/root (apply-gene {:from :left :put :R} empty-zipper)) => 
+    (zip/root (apply-gene {:from :left :put :R} empty-zipper)) =>
       '()
-    (zip/node (apply-gene {:from :left :put :R} empty-zipper)) => '()  
+    (zip/node (apply-gene {:from :left :put :R} empty-zipper)) => '()
 
-    (zip/root (apply-gene {:from :left :put :L :item nil} simple-zipper)) => 
+    (zip/root (apply-gene {:from :left :put :L :item nil} simple-zipper)) =>
       '(:foo :bar :baz)
-    (zip/root (apply-gene {:from :left :put :R} simple-zipper)) => 
+    (zip/root (apply-gene {:from :left :put :R} simple-zipper)) =>
       '(:foo :bar :baz)
-    (zip/node (apply-gene {:from :left :put :R} simple-zipper)) => 
+    (zip/node (apply-gene {:from :left :put :R} simple-zipper)) =>
       :baz))
 
 
@@ -321,26 +321,26 @@
   (let [at-5
     (-> test-zipper zip/next zip/next zip/next zip/next zip/next zip/next)]
 
-    (zip/root (apply-gene {:from :right :put :L :item 99} at-5)) => 
+    (zip/root (apply-gene {:from :right :put :L :item 99} at-5)) =>
       '(1 2 3 (4 5 99 (6)))
-    (zip/root (apply-gene {:from :right :put :R :item 99} at-5)) => 
+    (zip/root (apply-gene {:from :right :put :R :item 99} at-5)) =>
       '(1 2 3 (4 5 (6) 99))
 
-    (zip/root (apply-gene {:from :right :put :L :item 99} empty-zipper)) => 
+    (zip/root (apply-gene {:from :right :put :L :item 99} empty-zipper)) =>
       '(99)
-    (zip/root (apply-gene {:from :right :put :R :item 99} empty-zipper)) => 
+    (zip/root (apply-gene {:from :right :put :R :item 99} empty-zipper)) =>
       '(99)
 
-    (zip/root (apply-gene {:from :right :put :L :item 99} simple-zipper)) => 
+    (zip/root (apply-gene {:from :right :put :L :item 99} simple-zipper)) =>
       '(:foo 99 :bar :baz)
-    (zip/root (apply-gene {:from :right :put :R :item 99} simple-zipper)) => 
+    (zip/root (apply-gene {:from :right :put :R :item 99} simple-zipper)) =>
       '(:foo :bar 99 :baz)
     (zip/root (apply-gene {:from :right :put :L :item 99}
       (fast-forward simple-zipper))) =>  '(99 :foo :bar :baz)
     (zip/root (apply-gene {:from :right :put :R :item 99}
       (fast-forward simple-zipper))) =>  '(:foo 99 :bar :baz)
 
-    (zip/root (apply-gene {:from :right :put :L :item 99} stubby-zipper)) => 
+    (zip/root (apply-gene {:from :right :put :L :item 99} stubby-zipper)) =>
       '(() () ((99)))
     (zip/root (apply-gene {:from :right :put :L :item 99}
       (zip/prev stubby-zipper))) => '(() () (99 ()))
@@ -355,17 +355,17 @@
   (let [at-5
     (-> test-zipper zip/next zip/next zip/next zip/next zip/next zip/next)]
 
-    (zip/root (apply-gene {:from :right :put :L :item nil} at-5)) => 
+    (zip/root (apply-gene {:from :right :put :L :item nil} at-5)) =>
       '(1 2 3 (4 5 (6)))
     (zip/node (apply-gene {:from :right :put :R} at-5)) => '(6)
 
-    (zip/root (apply-gene {:from :right :put :L :item nil} empty-zipper)) => 
+    (zip/root (apply-gene {:from :right :put :L :item nil} empty-zipper)) =>
       '()
-    (zip/node (apply-gene {:from :right :put :R} empty-zipper)) => '()  
+    (zip/node (apply-gene {:from :right :put :R} empty-zipper)) => '()
 
-    (zip/root (apply-gene {:from :right :put :L :item nil} simple-zipper)) => 
+    (zip/root (apply-gene {:from :right :put :L :item nil} simple-zipper)) =>
       '(:foo :bar :baz)
-    (zip/node (apply-gene {:from :right :put :R} simple-zipper)) => 
+    (zip/node (apply-gene {:from :right :put :R} simple-zipper)) =>
       :bar))
 
 
@@ -386,28 +386,28 @@
   (let [at-4
     (-> test-zipper zip/next zip/next zip/next zip/next zip/next)]
 
-    (zip/root (apply-gene {:from :append :put :L :item 99} at-4)) => 
+    (zip/root (apply-gene {:from :append :put :L :item 99} at-4)) =>
       '(1 2 3 (4 5 99 (6)))
-    (zip/root (apply-gene {:from :append :put :R :item 99} at-4)) => 
+    (zip/root (apply-gene {:from :append :put :R :item 99} at-4)) =>
       '(1 2 3 (4 5 (6) 99))
 
-    (zip/root (apply-gene {:from :append :put :L :item 99} empty-zipper)) => 
+    (zip/root (apply-gene {:from :append :put :L :item 99} empty-zipper)) =>
       '(99)
-    (zip/root (apply-gene {:from :append :put :R :item 99} empty-zipper)) => 
+    (zip/root (apply-gene {:from :append :put :R :item 99} empty-zipper)) =>
       '(99)
 
-    (zip/root (apply-gene {:from :append :put :L :item 99} simple-zipper)) => 
+    (zip/root (apply-gene {:from :append :put :L :item 99} simple-zipper)) =>
       '(:foo :bar 99 :baz)
-    (zip/root (apply-gene {:from :append :put :R :item 99} simple-zipper)) => 
+    (zip/root (apply-gene {:from :append :put :R :item 99} simple-zipper)) =>
       '(:foo :bar :baz 99)
     (zip/root (apply-gene {:from :append :put :L :item 99}
       (fast-forward simple-zipper))) =>  '(:foo :bar 99 :baz)
     (zip/root (apply-gene {:from :append :put :R :item 99}
       (fast-forward simple-zipper))) =>  '(:foo :bar :baz 99)
 
-    (zip/root (apply-gene {:from :append :put :L :item 99} stubby-zipper)) => 
+    (zip/root (apply-gene {:from :append :put :L :item 99} stubby-zipper)) =>
       '(() () ((99)))
-    (zip/root (apply-gene {:from :append :put :R :item 99} stubby-zipper)) => 
+    (zip/root (apply-gene {:from :append :put :R :item 99} stubby-zipper)) =>
       '(() () ((99)))
     (zip/root (apply-gene {:from :append :put :L :item 99}
       (zip/prev stubby-zipper))) => '(() () (99 ()))
@@ -436,28 +436,28 @@
   (let [at-4
     (-> test-zipper zip/next zip/next zip/next zip/next zip/next)]
 
-    (zip/root (apply-gene {:from :prev :put :L :item 99} at-4)) => 
+    (zip/root (apply-gene {:from :prev :put :L :item 99} at-4)) =>
       '(1 2 3 99 (4 5 (6)))
-    (zip/root (apply-gene {:from :prev :put :R :item 99} at-4)) => 
+    (zip/root (apply-gene {:from :prev :put :R :item 99} at-4)) =>
       '(1 2 3 (4 5 (6)) 99)
 
-    (zip/root (apply-gene {:from :prev :put :L :item 99} empty-zipper)) => 
+    (zip/root (apply-gene {:from :prev :put :L :item 99} empty-zipper)) =>
       '(99)
-    (zip/root (apply-gene {:from :prev :put :R :item 99} empty-zipper)) => 
+    (zip/root (apply-gene {:from :prev :put :R :item 99} empty-zipper)) =>
       '(99)
 
-    (zip/root (apply-gene {:from :prev :put :L :item 99} simple-zipper)) => 
+    (zip/root (apply-gene {:from :prev :put :L :item 99} simple-zipper)) =>
       '(:foo :bar 99 :baz)
-    (zip/root (apply-gene {:from :prev :put :R :item 99} simple-zipper)) => 
+    (zip/root (apply-gene {:from :prev :put :R :item 99} simple-zipper)) =>
       '(:foo :bar :baz 99)
     (zip/root (apply-gene {:from :prev :put :L :item 99}
       (fast-forward simple-zipper))) =>  '(:foo 99 :bar :baz)
     (zip/root (apply-gene {:from :prev :put :R :item 99}
       (fast-forward simple-zipper))) =>  '(:foo :bar 99 :baz)
 
-    (zip/root (apply-gene {:from :prev :put :L :item 99} stubby-zipper)) => 
+    (zip/root (apply-gene {:from :prev :put :L :item 99} stubby-zipper)) =>
       '(() () (99 ()))
-    (zip/root (apply-gene {:from :prev :put :R :item 99} stubby-zipper)) => 
+    (zip/root (apply-gene {:from :prev :put :R :item 99} stubby-zipper)) =>
       '(() () (() 99))
     (zip/root (apply-gene {:from :prev :put :L :item 99}
       (zip/prev stubby-zipper))) => '(() () 99 (()))
@@ -487,28 +487,28 @@
   (let [at-4
     (-> test-zipper zip/next zip/next zip/next zip/next zip/next)]
 
-    (zip/root (apply-gene {:from :next :put :L :item 99} at-4)) => 
+    (zip/root (apply-gene {:from :next :put :L :item 99} at-4)) =>
       '(1 2 3 (4 99 5 (6)))
-    (zip/root (apply-gene {:from :next :put :R :item 99} at-4)) => 
+    (zip/root (apply-gene {:from :next :put :R :item 99} at-4)) =>
       '(1 2 3 (4 5 99 (6)))
 
-    (zip/root (apply-gene {:from :next :put :L :item 99} empty-zipper)) => 
+    (zip/root (apply-gene {:from :next :put :L :item 99} empty-zipper)) =>
       '(99)
-    (zip/root (apply-gene {:from :next :put :R :item 99} empty-zipper)) => 
+    (zip/root (apply-gene {:from :next :put :R :item 99} empty-zipper)) =>
       '(99)
 
-    (zip/root (apply-gene {:from :next :put :L :item 99} simple-zipper)) => 
+    (zip/root (apply-gene {:from :next :put :L :item 99} simple-zipper)) =>
       '(:foo 99 :bar :baz)
-    (zip/root (apply-gene {:from :next :put :R :item 99} simple-zipper)) => 
+    (zip/root (apply-gene {:from :next :put :R :item 99} simple-zipper)) =>
       '(:foo :bar 99 :baz)
     (zip/root (apply-gene {:from :next :put :L :item 99}
       (fast-forward simple-zipper))) =>  '(99 :foo :bar :baz)
     (zip/root (apply-gene {:from :next :put :R :item 99}
       (fast-forward simple-zipper))) =>  '(:foo 99 :bar :baz)
 
-    (zip/root (apply-gene {:from :next :put :L :item 99} stubby-zipper)) => 
+    (zip/root (apply-gene {:from :next :put :L :item 99} stubby-zipper)) =>
       '(99 () () (()))
-    (zip/root (apply-gene {:from :next :put :R :item 99} stubby-zipper)) => 
+    (zip/root (apply-gene {:from :next :put :R :item 99} stubby-zipper)) =>
       '(() 99 () (()))
     (zip/root (apply-gene {:from :next :put :L :item 99}
       (zip/prev stubby-zipper))) => '(() () ((99)))
@@ -540,28 +540,28 @@
   (let [at-4
     (-> test-zipper zip/next zip/next zip/next zip/next zip/next)]
 
-    (zip/root (apply-gene {:from :up :put :L :item 99} at-4)) => 
+    (zip/root (apply-gene {:from :up :put :L :item 99} at-4)) =>
       '(1 2 3 99 (4 5 (6)))
-    (zip/root (apply-gene {:from :up :put :R :item 99} at-4)) => 
+    (zip/root (apply-gene {:from :up :put :R :item 99} at-4)) =>
       '(1 2 3 (4 5 (6)) 99)
 
-    (zip/root (apply-gene {:from :up :put :L :item 99} empty-zipper)) => 
+    (zip/root (apply-gene {:from :up :put :L :item 99} empty-zipper)) =>
       '(99)
-    (zip/root (apply-gene {:from :up :put :R :item 99} empty-zipper)) => 
+    (zip/root (apply-gene {:from :up :put :R :item 99} empty-zipper)) =>
       '(99)
 
-    (zip/root (apply-gene {:from :up :put :L :item 99} simple-zipper)) => 
+    (zip/root (apply-gene {:from :up :put :L :item 99} simple-zipper)) =>
       '(99 :foo :bar :baz)
-    (zip/root (apply-gene {:from :up :put :R :item 99} simple-zipper)) => 
+    (zip/root (apply-gene {:from :up :put :R :item 99} simple-zipper)) =>
       '(:foo 99 :bar :baz)
     (zip/root (apply-gene {:from :up :put :L :item 99}
       (fast-forward simple-zipper))) =>  '(99 :foo :bar :baz)
     (zip/root (apply-gene {:from :up :put :R :item 99}
       (fast-forward simple-zipper))) =>  '(:foo 99 :bar :baz)
 
-    (zip/root (apply-gene {:from :up :put :L :item 99} stubby-zipper)) => 
+    (zip/root (apply-gene {:from :up :put :L :item 99} stubby-zipper)) =>
       '(() () (99 ()))
-    (zip/root (apply-gene {:from :up :put :R :item 99} stubby-zipper)) => 
+    (zip/root (apply-gene {:from :up :put :R :item 99} stubby-zipper)) =>
       '(() () (() 99))
     (zip/root (apply-gene {:from :up :put :L :item 99}
       (zip/prev stubby-zipper))) => '(() () 99 (()))
@@ -593,28 +593,28 @@
   (let [at-4
     (-> test-zipper zip/next zip/next zip/next zip/next zip/next)]
 
-    (zip/root (apply-gene {:from :down :put :L :item 99} at-4)) => 
+    (zip/root (apply-gene {:from :down :put :L :item 99} at-4)) =>
       '(1 2 3 (99 4 5 (6)))
-    (zip/root (apply-gene {:from :down :put :R :item 99} at-4)) => 
+    (zip/root (apply-gene {:from :down :put :R :item 99} at-4)) =>
       '(1 2 3 (4 99 5 (6)))
 
-    (zip/root (apply-gene {:from :down :put :L :item 99} empty-zipper)) => 
+    (zip/root (apply-gene {:from :down :put :L :item 99} empty-zipper)) =>
       '(99)
-    (zip/root (apply-gene {:from :down :put :R :item 99} empty-zipper)) => 
+    (zip/root (apply-gene {:from :down :put :R :item 99} empty-zipper)) =>
       '(99)
 
-    (zip/root (apply-gene {:from :down :put :L :item 99} simple-zipper)) => 
+    (zip/root (apply-gene {:from :down :put :L :item 99} simple-zipper)) =>
       '(99 :foo :bar :baz)
-    (zip/root (apply-gene {:from :down :put :R :item 99} simple-zipper)) => 
+    (zip/root (apply-gene {:from :down :put :R :item 99} simple-zipper)) =>
       '(:foo 99 :bar :baz)
     (zip/root (apply-gene {:from :down :put :L :item 99}
       (fast-forward simple-zipper))) =>  '(:foo :bar 99 :baz)
     (zip/root (apply-gene {:from :down :put :R :item 99}
       (fast-forward simple-zipper))) =>  '(:foo :bar :baz 99)
 
-    (zip/root (apply-gene {:from :down :put :L :item 99} stubby-zipper)) => 
+    (zip/root (apply-gene {:from :down :put :L :item 99} stubby-zipper)) =>
       '(() () ((99)))
-    (zip/root (apply-gene {:from :down :put :R :item 99} stubby-zipper)) => 
+    (zip/root (apply-gene {:from :down :put :R :item 99} stubby-zipper)) =>
       '(() () ((99)))
     (zip/root (apply-gene {:from :down :put :L :item 99}
       (zip/prev stubby-zipper))) => '(() () ((99)))
@@ -673,30 +673,30 @@
 
 
 (fact "jump-to tuples"
-  (zip/root (apply-gene {:from 0 :put :L :item 99} test-zipper)) => 
+  (zip/root (apply-gene {:from 0 :put :L :item 99} test-zipper)) =>
     '(99 1 2 3 (4 5 (6)))
-  (zip/root (apply-gene {:from -1 :put :R :item 99} test-zipper)) => 
+  (zip/root (apply-gene {:from -1 :put :R :item 99} test-zipper)) =>
     '(1 2 3 (4 5 (6 99)))
-  (zip/root (apply-gene {:from -2 :put :R :item 99} test-zipper)) => 
+  (zip/root (apply-gene {:from -2 :put :R :item 99} test-zipper)) =>
     '(1 2 3 (4 5 (6) 99))
 
-  (zip/root (apply-gene {:from 33 :put :L :item 99} empty-zipper)) => 
+  (zip/root (apply-gene {:from 33 :put :L :item 99} empty-zipper)) =>
     '(99)
-  (zip/root (apply-gene {:from 33 :put :R :item 99} empty-zipper)) => 
+  (zip/root (apply-gene {:from 33 :put :R :item 99} empty-zipper)) =>
     '(99)
 
-  (zip/root (apply-gene {:from 31 :put :L :item 99} simple-zipper)) => 
+  (zip/root (apply-gene {:from 31 :put :L :item 99} simple-zipper)) =>
     '(:foo 99 :bar :baz)
-  (zip/root (apply-gene {:from 31 :put :R :item 99} simple-zipper)) => 
+  (zip/root (apply-gene {:from 31 :put :R :item 99} simple-zipper)) =>
     '(:foo :bar 99 :baz)
   (zip/root (apply-gene {:from -1 :put :L :item 99}
     (fast-forward simple-zipper))) =>  '(:foo :bar 99 :baz)
   (zip/root (apply-gene {:from -1 :put :R :item 99}
     (fast-forward simple-zipper))) =>  '(:foo :bar :baz 99)
 
-  (zip/root (apply-gene {:from 1 :put :L :item 99} stubby-zipper)) => 
+  (zip/root (apply-gene {:from 1 :put :L :item 99} stubby-zipper)) =>
     '((99) () (()))
-  (zip/root (apply-gene {:from 2 :put :R :item 99} stubby-zipper)) => 
+  (zip/root (apply-gene {:from 2 :put :R :item 99} stubby-zipper)) =>
     '(() () 99 (()))
   (zip/root (apply-gene {:from -2 :put :L :item 99}
     (zip/prev stubby-zipper))) => '(() () (99 ()))
@@ -747,3 +747,33 @@
      {:from :prev, :put :R, :item 4}
      ]) => '[2 3 1 (()) (4)])
 
+
+
+(defn random-test-bb8-cursor
+  []
+  (eval (rand-nth
+    ['(- (rand-int 100) 50)
+      :head :tail :subhead :append :left :right :prev :next :up :down])
+      ))
+
+
+(defn random-test-bb8-side
+  []
+  (rand-nth [:L :R]))
+
+(defn random-test-bb8-genome
+  [size]
+  (reduce
+    (fn [genome i]
+      (conj genome {:from (random-test-bb8-cursor)
+                    :put (random-test-bb8-side)
+                    :item (if (< (rand) 3/4) i '())
+                    }))
+    []
+    (range 1 size)
+    ))
+
+(future-fact "I can produce 1000 random 100-gene genomes and translate them without a hitch"
+  :acceptance
+  (bb8->push (random-test-bb8-genome 100)) => 99
+  )
