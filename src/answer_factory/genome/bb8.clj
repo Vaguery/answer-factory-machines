@@ -1,5 +1,7 @@
 (ns answer-factory.genome.bb8
-  (:require [clojure.zip :as zip]))
+  (:require [clojure.zip :as zip]
+            [push.util.numerics :as num]
+            ))
 
 
 (defn empty-zipper?
@@ -182,14 +184,14 @@
 (defn jump-to
   "calculates index in Push style (modulo count-cursorpoints) and scrolls to that position"
   [z idx]
-  (let [i (mod idx (count-cursorpoints z))]
+  (let [i (num/scalar-to-index idx (count-cursorpoints z))]
     (scroll-to-index z i)))
 
 
 (defn move-cursor
   "takes a zipper and a move instruction, and returns the modified zipper"
   [z m]
-  (cond 
+  (cond
     (integer? m)   (jump-to z m)
     (= m :head)    (rewind z)
     (= m :tail)    (fast-forward z)
@@ -229,6 +231,3 @@
         (fn [z g] (apply-gene g z))
         (zip/next (zip/seq-zip '()))
         tuples))))
-
-
-

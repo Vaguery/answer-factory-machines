@@ -1,5 +1,6 @@
 (ns answer-factory.genome.bb8-test
-  (:require [clojure.zip :as zip])
+  (:require [clojure.zip :as zip]
+            [push.util.numerics :as num])
   (:use [answer-factory.genome.bb8])
   (:use midje.sweet)
   )
@@ -647,7 +648,7 @@
   )
 
 
-(fact "jump-to works for any number, modulo count-cursorpoints"
+(fact "jump-to works for any integer, modulo count-cursorpoints"
   (zip/node (jump-to test-zipper 0)) => 1
   (zip/node (jump-to test-zipper 1)) => 2
   (zip/node (jump-to test-zipper 11)) => '(4 5 (6))
@@ -665,6 +666,31 @@
   (zip/node (jump-to stubby-zipper 1)) => nil
   (zip/node (jump-to stubby-zipper 11)) => '(())
   (zip/node (jump-to stubby-zipper -2)) => '()
+  )
+
+(fact "jump-to works for non-integer indices, but rounding up because scalar-to-index"
+  (zip/node (jump-to test-zipper -1/3)) => 1
+  (zip/node (jump-to test-zipper 1/3)) => 2
+  (zip/node (jump-to test-zipper 4/3)) => 3
+  (zip/node (jump-to test-zipper 7/3)) => '(4 5 (6))
+  (zip/node (jump-to test-zipper 10/3)) => 4
+  (zip/node (jump-to test-zipper 13/3)) => 5
+  (zip/node (jump-to test-zipper 16/3)) => '(6)
+  (zip/node (jump-to test-zipper 19/3)) => 6
+  (zip/node (jump-to test-zipper 22/3)) => 1
+  (zip/node (jump-to test-zipper 662731726716247643827635478263548762M)) => 3
+  )
+
+
+(fact "jump-to works for infinite indices"
+  (zip/node (jump-to test-zipper num/∞)) => 1
+  (zip/node (jump-to test-zipper num/-∞)) => 1
+  )
+
+
+(fact "jump-to works for empty zippers with arbitrary indices"
+  (jump-to empty-zipper 81932883N) => (scroll-to-index empty-zipper 0)
+  (jump-to empty-zipper (/ 8712368124M 9.8e6)) => (scroll-to-index empty-zipper 0)
   )
 
 
