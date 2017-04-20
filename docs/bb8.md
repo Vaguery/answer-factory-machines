@@ -17,20 +17,20 @@ Each `bb8` gene is a map. The salient keys are
 
 ### `:from`
 
-The `:from` key is used to specify one of several "moves" of a notional cursor. The values currently supported are
+The `:from` key is used to specify one of several "moves" of a notional cursor. The cursor always points to items and subtrees containing items. The values currently supported are
 
-- any numerical value: jump the cursor to the position indexed by that number, counting items and sub-trees as individual steps in a depth-first traversal of the tree, and counting the first item in that traversal as position `0`. Non-integer indices are rounded _up_ to the next integer, and indices outside the range of the tree's current size "wrap" to fit.
-- `:head` place the cursor on the first item in the tree; if the tree is empty, then it's the empty space inside the tree, not the _whole_ tree
-- `:tail` move the cursor to the last item in the tree (by depth-first traversal)
-- `:subhead` move to the first item within the current sub-tree
-- `:append` move to the last item within the current level of sub-tree
-- `:left` move one step to the left in the current sub-tree level, wrapping around to the last position in the sub-tree if we're already at the first position
-- `:right` move one step to the right in the current sub-tree level, wrapping round to the first position in this level if we're already at the last item
-- `:prev` move one step "back" in the entire tree's depth-first traversal, wrapping to the last item in the tree if we're already at the first
-- `:next` move one step "forward" in the entire tree's depth-first traversal, wrapping to the first item in the tree if we're already at the last
-- `:up` move from a position within a sub-tree to the next level up, selecting the sub-tree in which you were before; if there are no "up" levels, stay in the same location
-- `:down` if the current cursor is positioned on  sub-tree, enter that sub-tree and move to the first position within it; otherwise, stay in place
-- `:here` do not move the cursor
+- any numerical value: jump the cursor to the position indexed by that number, counting items and subtrees as individual steps in a depth-first traversal of the tree, and counting the first item in that traversal as position `0`. Non-integer indices are rounded _up_ to the next integer, and indices outside the range of the tree's current size "wrap" to fit.
+- `:head` Place the cursor on the first item in the tree (by a depth-first traversal). Note: if the first item is a subtree, point at the subtree itself, not the first item inside it. If the tree is empty, then it's "pointing to" the empty space inside the tree, not the _whole_ tree
+- `:tail` Move the cursor to the last item in the tree (by depth-first traversal).
+- `:subhead` Move to the first item within the current subtree.
+- `:append` Move to the last item within the current level of subtree.
+- `:left` Move one step to the left in the current subtree level, wrapping around to the last position in the subtree if we're already at the first position.
+- `:right` Move one step to the right in the current subtree level, wrapping round to the first position in this level if we're already at the last item.
+- `:prev` Move one step "back" in the entire tree's depth-first traversal, wrapping to the last item in the tree if we're already at the first
+- `:next` Move one step "forward" in the entire tree's depth-first traversal, wrapping to the first item in the tree if we're already at the last.
+- `:up` Move from a position within a subtree to the next level up, selecting the subtree in which you were before; if there are no "up" levels, stay in the same location.
+- `:down` If the current cursor is positioned on a subtree, enter that subtree and move to the first position within it; otherwise, stay in place.
+- `:here` Do not move the cursor.
 
 The `:from` cursor movement values only ever _move_ a cursor within an existing (possibly empty) tree. If there is no `:from` value, or if the value is `:here`, or if the cursor position cannot be moved in the indicated direction (see the list details), then the cursor stays where it is at the moment.
 
@@ -48,7 +48,7 @@ This latter is probably not as desirable as it may seem, so while `bb8` `:item` 
 
 ### `:branch?`
 
-Instead of having a list `:item`, use the `:branch?` key in a `bb8` gene to create a ramified tree. If the `:branch?` value is `true` (or truthy), then when the `:item` is inserted, it will automatically be wrapped in a new sub-tree.
+Instead of having a list `:item`, use the `:branch?` key in a `bb8` gene to create a ramified tree. If the `:branch?` value is `true` (or truthy), then when the `:item` is inserted, it will automatically be wrapped in a new subtree.
 
 ### edge cases
 
@@ -64,4 +64,4 @@ A gene that lacks a `:branch?` key will act as though the value were `false`.
 
 ## some examples
 
-`TBD`
+You can follow along with some simple examples in the [midje tests](https://github.com/Vaguery/answer-factory-machines/blob/master/test/answer_factory/genome/bb8_test.clj#L880-L919) to see how `bb8` genomes get translated into programs.

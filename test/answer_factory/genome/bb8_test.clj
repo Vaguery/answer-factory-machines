@@ -794,7 +794,7 @@
       '[(6) (4) 5 1] )
 
 
-;; edge causes
+;; edge cases
 
 (fact "when there is no `:from`, sit still"
   (bb8->push
