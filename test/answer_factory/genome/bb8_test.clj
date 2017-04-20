@@ -925,7 +925,7 @@
   []
   (eval (rand-nth
     ['(- (rand-int 100) 50)
-      :here :here :here :here :head :tail :subhead :append :left :right :prev :next :up :down])
+      :here :here :next :prev])
       ))
 
 (defn random-test-bb8-side
