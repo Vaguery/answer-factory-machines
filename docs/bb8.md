@@ -4,7 +4,7 @@ The `bb8` genome structure depends on a generalized dynamic tree-constructing al
 
 The model used is closely derived from the `zipper` tree-walking data structure, with the addition of a few extra "moves". A genome is translated into a Push program (or potentially any other tree-structured object), gene-by-gene, by imagining a "cursor" sitting at the head of an empty list. Each gene specifies how to move the cursor in the tree, where to insert a new item, and what that item is supposed to be.
 
-
+<!--
 
 ## rolling around
 
@@ -62,7 +62,7 @@ A gene with no `:put` value, or anything besides `:L` or `:R` specifically, will
 
 A gene that lacks an `:item` value will update the cursor position, but will _only_ insert something if `:branch?` is truthy. If that is the case, then an empty list will be inserted at the specified position.
 
-A gene that lacks a `:branch?` key will act as though the value were `false`.
+A gene that lacks a `:branch?` key will act as though the value were `false`. -->
 
 ## some examples
 
