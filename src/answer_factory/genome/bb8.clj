@@ -203,6 +203,7 @@
     (= m :next)    (wrap-next z)
     (= m :up)      (step-up z)
     (= m :down)    (step-down z)
+    (= m :here)    z ;; explicitly sit still
     :else z))
 
 
@@ -211,13 +212,17 @@
   [tuple z]
   (let [mv   (:from tuple)
         put  (:put tuple)
-        item (:item tuple)]
+        item (:item tuple)
+        realized-item (if (:branch? tuple) (list item) item)
+        ]
     (cond (empty-zipper? z)
-            (if (nil? item) z (zip/down (zip/seq-zip (list item))))
+            (if (nil? realized-item)
+              z
+              (zip/down (zip/seq-zip (list realized-item))))
           (= put :L)
-            (put-left (move-cursor z mv) item)
+            (put-left (move-cursor z mv) realized-item)
           (= put :R)
-            (put-right (move-cursor z mv) item)
+            (put-right (move-cursor z mv) realized-item)
           :else
             z)))
 

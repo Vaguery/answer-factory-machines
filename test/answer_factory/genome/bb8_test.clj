@@ -630,6 +630,18 @@
     ))
 
 
+;; here moves (do not move, in other words)
+
+(fact ":here tuples"
+  (let [at-4
+    (-> test-zipper zip/next zip/next zip/next zip/next zip/next)]
+
+    (zip/root (apply-gene {:from :here :put :L :item 99} at-4)) =>
+      '(1 2 3 (99 4 5 (6)))
+    (zip/root (apply-gene {:from :here :put :R :item 99} at-4)) =>
+      '(1 2 3 (4 99 5 (6)))
+      ))
+
 ;; goto moves
 
 
@@ -730,6 +742,29 @@
     (-> stubby-zipper zip/prev zip/prev))) => '(() () 99 (()))
   )
 
+;; branch? fields
+
+(fact ":branch?, when true, causes the item to be inserted in a new branch"
+  (let [at-4
+    (-> test-zipper zip/next zip/next zip/next zip/next zip/next)]
+
+    (zip/root (apply-gene {:from :here :put :L :item 99 :branch? true} at-4)) =>
+      '(1 2 3 ((99) 4 5 (6)))
+    (zip/root (apply-gene {:from :here :put :R :item 99 :branch? true} at-4)) =>
+      '(1 2 3 (4 (99) 5 (6)))
+    (zip/root (apply-gene {:from :here :put :L :item 99 :branch? false} at-4)) =>
+      '(1 2 3 (99 4 5 (6)))
+    (zip/root (apply-gene {:from :here :put :R :item 99 :branch? false} at-4)) =>
+      '(1 2 3 (4 99 5 (6)))
+
+    (zip/root
+      (apply-gene {:from :here :put :R :item 99 :branch? true}
+        empty-zipper)) => '((99))
+    (zip/root
+      (apply-gene {:from :here :put :R :item 99 :branch? false}
+        empty-zipper)) => '(99)
+      ))
+
 
 
 ;; translating genomes
@@ -762,7 +797,7 @@
 
 ;; some problem examples
 
-(fact "this genome translates successfully"
+(fact "these genomes translate successfully"
   (bb8->push
     [{:from :subhead, :put :L, :item '()}
      {:from :left, :put :L, :item '()}
@@ -771,7 +806,36 @@
      {:from :prev, :put :L, :item 2}
      {:from :up, :put :R, :item 3}
      {:from :prev, :put :R, :item 4}
-     ]) => '[2 3 1 (()) (4)])
+     ]) => '[2 3 1 (()) (4)]
+
+  (bb8->push
+    [{:from :here, :put :L, :item 1}
+    {:from :here, :put :L, :item 2}
+    {:from :here, :put :L, :item 3}
+    {:from :here, :put :L, :item 4}
+    {:from :here, :put :L, :item 5}
+    {:from :here, :put :L, :item 6}
+    ]) => '[2 3 4 5 6 1]
+
+  (bb8->push
+    [{:from :next, :put :R, :item 1 :branch? true}
+    {:from :next, :put :R, :item 2}
+    {:from :next, :put :R, :item 3 :branch? true}
+    {:from :next, :put :R, :item 4}
+    {:from :next, :put :R, :item 5 :branch? true}
+    {:from :next, :put :R, :item 6}
+    ]) => '[(1 2 (3 (5) 6) 4)]
+
+  (bb8->push
+    [{:from :prev, :put :L, :item 1 :branch? true}
+    {:from :prev, :put :L, :item 2}
+    {:from :prev, :put :L, :item 3 :branch? true}
+    {:from :prev, :put :L, :item 4}
+    {:from :prev, :put :L, :item 5 :branch? true}
+    {:from :prev, :put :L, :item 6}
+    ]) => '[(((6 5) 4 3) 2 1)]
+    )
+
 
 
 
