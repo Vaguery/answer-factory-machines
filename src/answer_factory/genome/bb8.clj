@@ -213,9 +213,11 @@
   (let [mv   (:from tuple)
         put  (:put tuple)
         item (:item tuple)
-        realized-item (if (:branch? tuple) (list item) item)
+        realized-item (if (:branch? tuple)
+                        (if (nil? item) (list) (list item))
+                        item)
         ]
-    (cond (empty-zipper? z)
+    (cond (and (empty-zipper? z) (contains? #{:L :R} put))
             (if (nil? realized-item)
               z
               (zip/down (zip/seq-zip (list realized-item))))
@@ -223,6 +225,8 @@
             (put-left (move-cursor z mv) realized-item)
           (= put :R)
             (put-right (move-cursor z mv) realized-item)
+          (nil? item)
+            (move-cursor z mv)
           :else
             z)))
 

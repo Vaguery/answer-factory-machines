@@ -794,6 +794,88 @@
       '[(6) (4) 5 1] )
 
 
+;; edge causes
+
+(fact "when there is no `:from`, sit still"
+  (bb8->push
+    [{:from :here, :put :R, :item 1}     ;[1]
+     {:from :here, :put :R, :item 2}]) => [1 2]
+  (bb8->push
+    [{             :put :R, :item 1}     ;[1]
+     {             :put :R, :item 2}]) => [1 2]
+     )
+
+(fact "when there is no `:put`, do nothing"
+  (bb8->push
+    [{:from :here, :put :R, :item 1}     ;[1]
+     {:from :here, :put :R, :item 2}]) => [1 2]
+  (bb8->push
+    [{:from :here           :item 1}     ;[]
+     {:from :here, :put :R, :item 2}]) => [2]
+  (bb8->push
+    [{:from :here           :item 1}     ;[]
+     {:from :here,          :item 2}]) => []
+     )
+
+(fact "when there is no `:item`, move the cursor but do not insert `nil`"
+  (bb8->push
+    [{:from :head, :put :L, :item 1, :branch? true}  ;[(1)]
+     {:from :tail, :put :L, :item 2}                 ;[(2 1)]
+     {:from :head, :put :L, :item 3, :branch? true}  ;[(3) (2 1)]
+     {:from :tail, :put :L, :item 4}]) => '[(3) (2 4 1)]
+  (bb8->push
+    [{:from :head, :put :L, :item 1, :branch? true}  ;[(1)]
+     {:from :tail, :put :L         }                 ;[(1)]
+     {:from :head, :put :L, :item 3, :branch? true}  ;[(3) (1)]
+     {:from :tail, :put :L, :item 4}]) => '[(3) (4 1)]
+  (bb8->push
+    [{:from :head, :put :L, :item 1, :branch? true}  ;[(1)]
+     {:from :tail, :put :L, :item 2}                 ;[(2 1)]
+     {:from :head, :put :L, :item 3, :branch? true}  ;[(3) (2 1)]
+     {:from :tail, :put :L         }]) => '[(3) (2 1)]
+     )
+
+(fact "when there is no `:item`, but `:branch?` is true, insert an empty list"
+  (bb8->push
+    [{:from :head, :put :L, :item 1, :branch? true}  ;[(1)]
+     {:from :tail, :put :L, :item 2}                 ;[(2 1)]
+     {:from :head, :put :L, :item 3, :branch? true}  ;[(3) (2 1)]
+     {:from :tail, :put :L, :item 4}]) => '[(3) (2 4 1)]
+  (bb8->push
+    [{:from :head, :put :L,        , :branch? true}  ;[()]
+     {:from :tail, :put :L, :item 2}                 ;[(2)]
+     {:from :head, :put :L, :item 3, :branch? true}  ;[(3) (2)]
+     {:from :tail, :put :L, :item 4}]) => '[(3) (4 2)]
+  (bb8->push
+    [{:from :head, :put :L,        , :branch? true}  ;[()]
+     {:from :tail, :put :L, :item 2}                 ;[(2)]
+     {:from :head, :put :L,          :branch? true}  ;[() (2)]
+     {:from :tail, :put :L, :item 4}]) => '[() (4 2)]
+     )
+
+(fact "an empty gene translates fine"
+  (bb8->push
+    [{:from :head, :put :L, :item 1, :branch? true} ;[(1)]
+     {}                                             ;[(1)]
+     {:from :head, :put :L, :item 3, :branch? true} ;[(3) (1)]
+     {:from :tail, :put :L, :item 4}]) => '[(3) (4 1)]
+    )
+
+(fact "any genes lacking `:item` or `:put` are gone"
+  (bb8->push
+    [{:item 1}                                      ;[]
+     {:put :L}                                      ;[]
+     {:from :head, :put :L, :item 3, :branch? true} ;[(3)]
+     {:from :tail, :put :L, :item 4}]) => '[(4 3)]
+    )
+
+(fact "genes with `:put` and `:branch?` insert branches however"
+  (bb8->push
+    [{:put :L :branch? true}                ;; [()]
+     {:from :head, :put :L, :item 3}        ;; [3 ()]
+     {:from :tail, :put :L, :item 4}]) => '[3 (4)]
+    )
+
 
 ;; some problem examples
 
@@ -843,9 +925,8 @@
   []
   (eval (rand-nth
     ['(- (rand-int 100) 50)
-      :head :tail :subhead :append :left :right :prev :next :up :down])
+      :here :here :here :here :head :tail :subhead :append :left :right :prev :next :up :down])
       ))
-
 
 (defn random-test-bb8-side
   []
@@ -857,13 +938,16 @@
     (fn [genome i]
       (conj genome {:from (random-test-bb8-cursor)
                     :put (random-test-bb8-side)
-                    :item (if (< (rand) 3/4) i '())
+                    :item i
+                    :branch? (rand-nth [false false false true])
                     }))
     []
     (range 1 size)
     ))
 
-(future-fact "I can produce 1000 random 100-gene genomes and translate them without a hitch"
+(fact "I can produce 1000 random 100-gene genomes and translate them without a hitch"
   :acceptance
-  (bb8->push (random-test-bb8-genome 100)) => 99
-  )
+  (repeatedly
+    1000
+    #(bb8->push (random-test-bb8-genome 100))) =not=> (throws)
+    )
