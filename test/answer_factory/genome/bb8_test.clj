@@ -923,7 +923,8 @@
     {:from :next :put :R :item 3 :branch? true}
     {:from :down :put :L :item 4}
     {:from :here :put :R :item 5}
-    {:from :prev :put :R :item 6}]) => '[(4 6 2 5) (3) 1]
+    {:from :prev :put :R :item 6}
+    {:from -4.5 :put :L :item 7 :branch? true}]) => '[(4 6 2 (7) 5) (3) 1]
     )
 
 

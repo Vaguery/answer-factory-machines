@@ -192,7 +192,7 @@
   "takes a zipper and a move instruction, and returns the modified zipper"
   [z m]
   (cond
-    (integer? m)   (jump-to z m)
+    (number? m)   (jump-to z m)
     (= m :head)    (rewind z)
     (= m :tail)    (fast-forward z)
     (= m :subhead) (goto-leftmost z)

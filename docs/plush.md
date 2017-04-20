@@ -2,23 +2,9 @@
 
 The `plush` genome implemented here is an extension of that used in the [Clojush system](https://github.com/lspector/Clojush) from Lee Spector's lab at Hampshire College. In changing the representation and translation schemes, I've tried to maintain backwards-compatibility, but the Klapaucius Push dialect is no longer much like the Push found in Clojush, so be wary of breaking changes if you are importing Clojush genomes.
 
-A `plush` genome is simply a vector of `plush` genes. Here's an example:
+A `plush` genome is simply a vector of `plush` genes.
 
-~~~ clojure
- [{:from :head :put :L :item 1}
-  {:from :tail :put :L :item 2 :branch? true}
-  {:from :next :put :R :item 3 :branch? true}
-  {:from :down :put :L :item 4}
-  {:from :here :put :R :item 5}
-  {:from :prev :put :R :item 6}
-  ]
-~~~
-
-We translate this genome into a Push program one gene at a time, starting from a "seed" that is an empty Clojure vector `'[]`. We'll treat this vector as the _boundaries_ of the unfolding program, and as we process each `bb8` gene we'll move around inside these boundaries and add new items.
-
-[walkthrough TBD]
-
-The resulting program for this example `bb8` genome is therefore `[(4 6 2 5) (3) 1]`.
+[TBD]
 
 ## `plush` genes
 
