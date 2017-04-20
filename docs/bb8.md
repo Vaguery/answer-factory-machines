@@ -4,6 +4,8 @@ The `bb8` genome structure depends on a generalized dynamic tree-constructing al
 
 The model used is closely derived from the `zipper` tree-walking data structure, with the addition of a few extra "moves". A genome is translated into a Push program (or potentially any other tree-structured object), gene-by-gene, by imagining a "cursor" sitting at the head of an empty list. Each gene specifies how to move the cursor in the tree, where to insert a new item, and what that item is supposed to be.
 
+
+
 ## rolling around
 
 The name of the `bb8` genomic representation is a play on words on several levels. The "bb" part refers to the notion of _building blocks_ in genetic algorithms, since the design motivation for the representational scheme arose out of a desire to capture in a linear form some useful structures in a Push program that may not be contiguous in that program. But of course it is also a reference to the cute robot in _The Force Awakens_, who is always rolling around all over the place, and seems remarkably creative.
