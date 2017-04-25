@@ -14,7 +14,7 @@
   (mutate-gene-item {:item 22 :close 0} 1.0 []) => {:item 22 :close 0})
 
 
-(fact "mutate-gene-item actually samples the list"
+(fact "mutate-gene-item actually samples the list to obtain replacement items"
   (mutate-gene-item {:item 22 :close 0} 1.0 [1 2 3]) => {:item 8888 :close 0}
     (provided (rand-nth [1 2 3]) => 8888))
 

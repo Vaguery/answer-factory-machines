@@ -1,35 +1,44 @@
 (ns answer-factory.operator.select
   (:require [answer-factory.answer.push :as answer]))
 
-;; Notes on the fundamental structure of the data store and how it affects function calls.
-;;
-;; The Answers table contains information about genomes and programs only.
-;; The Rubrics table contain information about running and evaluating programs only.
-;; The Scores table contain all info about scores obtained when applying a Rubric to an Answer
-;;
-;; In many of these functions, what is passed in is either a collection of records
-;; or a single record from one or more of these tables.
+; Notes on the fundamental structure of the data store and how it affects function calls.
+;
+; The Answers table contains information about genomes and programs only, not scoring mechanisms or scores.
+; The Rubrics table contain information used to set up contexts for evaluating programs only, not scores or answers themselves.
+; The Scores table contain only pairs of Rubric and Answer ids, plus a numerical or vector-valued score
+;
+; In many of these functions, what is passed in is either a collection of records
+; or a single record from one or more of these tables.
 
-;
-; (defn uniform-selection
-;   "Returns a single element of the `answers` collection passed in, selected at random with uniform probability, disregarding the `scores` argument (which is still required)"
-;   [answers scores]
-;   (if (empty? answers)
-;     (throw (Exception. "uniform-selection attempted on an empty collection"))
-;     [(rand-nth answers)]))
-;
-;
-;
-; (defn uniform-cull
-;   "Returns the `answers` collection passed in with a randomly selected item removed, disregarding the `scores` argument (which is still required)"
-;   [answers scores]
-;   (if (empty? answers)
-;     (throw (Exception. "uniform-cull attempted on an empty collection"))
-;     (let [which (rand-int (count answers))]
-;       (into [] (concat (take which answers) (drop (inc which) answers))))))
-;
-;
-;
+(defn uniform-selection
+  "Returns a single element of the `answers` vector passed in, selected at random with uniform probability. A `scores` collection can also be passed in, but it is ignored. Requires a vector of answers."
+  [answers & {:keys [scores]
+              :or {scores {}}}]
+  (cond
+    (not (vector? answers))
+      (throw (Exception. "uniform-selection expects a vector of answers"))
+    (empty? answers)
+      []
+    :else
+      (vector (rand-nth answers))
+      ))
+
+
+(defn uniform-cull
+  "Returns the `answers` vector passed in with a uniformly-selected item removed. Accepts a `:scores` collection, but ignores it."
+  [answers & {:keys [scores]
+              :or {scores {}}}]
+  (cond
+    (not (vector? answers))
+      (throw (Exception. "uniform-cull expects a vector of answers"))
+    (empty? answers)
+      []
+    :else
+      (let [idx (rand-int (count answers))]
+        (into [] (concat (take idx answers) (drop (inc idx) answers)))
+        )))
+
+
 ; (defn scores-for-answer
 ;   "Takes a collection of Score hashmaps, and a single Answer record, and returns the subset of the scores which refer to that Answer by :id"
 ;   [scores answer]

@@ -7,7 +7,7 @@
   )
 
 
-(fact "tail-written simple programs are simple, and written in left-to-write order"
+(future-fact "tail-written simple programs are simple, and written in left-to-write order"
   (push-to-bb8 '(1)) => [{:from :tail :put :L :item 1}]
   (push-to-bb8 '(1 2 3)) => [{:from :tail :put :L :item 1}
                              {:from :tail :put :L :item 2}
@@ -18,6 +18,6 @@
                              {:from :tail, :item 4, :put :L}]
   )
 
-(fact "tail-writing drops into subtrees as it walks along"
-  (push-to-bb8 '(1 (2))) => 99
+(future-fact "tail-writing drops into subtrees as it walks along"
+  (push-to-bb8 '(1 (2 3))) => 99 ;; intentionally failing
   )
